@@ -15,6 +15,7 @@ typedef struct rrc_channel_message_s{
         LTE_BCCH_BCH_Message_t bcch_bch_msg;//MIB
         LTE_BCCH_DL_SCH_Message_t bcch_dl_sch_msg;//SIB
         LTE_PCCH_Message_t pcch_msg;
+        LTE_MCCH_Message_t mcch_msg;
     }message;
 }rrc_channel_message_t;
 

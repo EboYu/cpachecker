@@ -186,9 +186,10 @@ public class CFABuilder {
 
     private boolean finishFunctionBuild(String fileaname, String functionName){
         if(projectName.equals(UE)){
-            return  fileaname.endsWith("asn1_msg.c") ||
+            return  (fileaname.endsWith("asn1_msg.c")&& functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")) ||
                     functionName.equals("rrc_ue_process_securityModeCommand")||
                     functionName.equals("rrc_ue_process_ueCapabilityEnquiry")||
+                    functionName.equals("fill_ue_capability")||
                     functionName.equals("nas_message_encode") ||//EMM message
                     functionName.equals("esm_msg_encode") ||//ESM message
                     functionName.equals("nas_message_decode") ||
@@ -205,7 +206,7 @@ public class CFABuilder {
                     functionName.equals("_emm_as_send") ||
                     functionName.equals("s1ap_generate_downlink_nas_transport");
         }else {//eNB
-            return  fileaname.endsWith("asn1_msg.c") ||
+            return  (fileaname.endsWith("asn1_msg.c") && functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")&& !functionName.contains("Handover")) ||
                     functionName.equals("mac_rrc_data_req") ||
                     functionName.equals("uper_encode_to_buffer") ||
                     functionName.equals("uper_decode_complete") ||
@@ -226,6 +227,33 @@ public class CFABuilder {
                 functionName.equals("init_UE_stub")||
                 functionName.equals("UE_thread_synch")||
                 functionName.equals("UE_thread")||
+                (projectName.equals(UE)&& filename.endsWith("asn1_msg.c") &&
+                        (functionName.equals("do_MIB")||
+                                functionName.equals("do_SIB1")||
+                                functionName.equals("do_SIB23")||
+                                functionName.equals("do_RRCConnectionSetup")||
+                                functionName.equals("do_RRCConnectionSetup_BR")||
+                                functionName.equals("do_RRCConnectionReconfiguration_BR")||
+                                functionName.equals("do_RRCConnectionReconfiguration")||
+                                functionName.equals("do_RRCConnectionReestablishment")||
+                                functionName.equals("do_RRCConnectionReestablishmentReject")||
+                                functionName.equals("do_RRCConnectionReject")||
+                                functionName.equals("do_RRCConnectionRelease")||
+                                functionName.equals("do_MBSFNAreaConfig")||
+                                functionName.equals("do_DLInformationTransfer")||
+                                functionName.equals("do_Paging")||
+                                functionName.equals("do_UECapabilityEnquiry")||
+                                functionName.equals("do_HandoverPreparation")||
+                                functionName.equals("do_HandoverCommand")||
+                                functionName.equals("do_SecurityModeCommand")))||
+                (projectName.equals(ENB)&& filename.endsWith("asn1_msg.c") &&
+                        (functionName.equals("do_RRCConnectionRequest")||
+                                functionName.equals("do_SidelinkUEInformation")||
+                                functionName.equals("do_RRCConnectionSetupComplete")||
+                                functionName.equals("do_RRCConnectionReconfigurationComplete")||
+                                functionName.equals("do_MeasurementReport")||
+                                functionName.equals("fill_ue_capability")||
+                                functionName.equals("do_ULInformationTransfer")))||
                 (filename.contains("build/CMakeFiles") && functionName.endsWith("_constraint"))||
                 (filename.contains("openair2/LAYER2/MAC/main_ue.c") && !(functionName.equals("mac_top_init_ue")||functionName.equals("l2_init_ue")))||
                 (filename.contains("openair2/LAYER2/MAC/main.c") && (functionName.equals("init_slice_info")||functionName.equals("rlc_mac_init_global_param")));//start itti tasks in enb
