@@ -282,7 +282,10 @@ public class CFACreator {
       description="This option enables the computation of a classification of CFA nodes.")
 private boolean classifyNodes = false;
 
-  @Option(secure=true, description="C, Java, or LLVM IR?")
+  @Option(secure=true,
+      description="Programming language of the input program. If not given explicitly, "
+          + "auto-detection will occur")
+  // keep option name in sync with {@link CPAMain#language}, value might differ
   private Language language = Language.C;
 
   private final LogManager logger;
@@ -474,7 +477,8 @@ private boolean classifyNodes = false;
 
     // check the CFA of each function
     for (String functionName : cfa.getAllFunctionNames()) {
-      assert CFACheck.check(cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName));
+      assert CFACheck.check(
+          cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName), machineModel);
     }
     stats.checkTime.stop();
 
@@ -486,7 +490,8 @@ private boolean classifyNodes = false;
     // Check CFA again after post-processings
     stats.checkTime.start();
     for (String functionName : cfa.getAllFunctionNames()) {
-      assert CFACheck.check(cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName));
+      assert CFACheck.check(
+          cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName), machineModel);
     }
     stats.checkTime.stop();
 
@@ -572,7 +577,7 @@ private boolean classifyNodes = false;
 
     // check the super CFA starting at the main function
     stats.checkTime.start();
-    assert CFACheck.check(mainFunction, null);
+    assert CFACheck.check(mainFunction, null, machineModel);
     stats.checkTime.stop();
 
     if (((exportCfaFile != null) && (exportCfa || exportCfaPerFunction))
