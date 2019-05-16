@@ -1,5 +1,6 @@
 package org.nulist.plugin;
 
+import com.google.common.io.MoreFiles;
 import com.grammatech.cs.*;
 import org.nulist.plugin.model.action.ITTIAbstract;
 import org.nulist.plugin.parser.CFABuilder;
@@ -16,9 +17,18 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.CType;
 import org.sosy_lab.cpachecker.cmdline.CPAMain;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.lang.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.logging.Level;
+import java.util.zip.GZIPOutputStream;
 
 import static org.nulist.plugin.model.ChannelBuildOperation.doComposition;
 import static org.nulist.plugin.parser.FuzzyParser.channel;
@@ -99,6 +109,7 @@ public class CSurfPlugin {
                 r.printStackTrace();
             }
             printINFO("==================Finish MME==================");
+            project.unload();
 
             FuzzyParser fuzzyParser = new FuzzyParser(cpaMain.logManager, MachineModel.LINUX64, builderMap);
 
@@ -108,7 +119,7 @@ public class CSurfPlugin {
             if(builderMap.size()>1)
                 doComposition(builderMap);
 
-            project.unload();
+
             printINFO("==================CSURF_PLUGIN_END==================");
         }catch(result r){
             System.out.println("Uncaught exception: " + r);
@@ -118,6 +129,25 @@ public class CSurfPlugin {
     }
 
 
+
+    private static void serializeCFABuilder(Map<String, CFABuilder> builderMap){
+        builderMap.forEach((projectname, builder)->{
+            Path serializeCfaFile = Paths.get(projectname+".ser.gz");
+            try {
+                MoreFiles.createParentDirectories(serializeCfaFile);
+                try (OutputStream outputStream = Files.newOutputStream(serializeCfaFile);
+                     OutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
+                     ObjectOutputStream oos = new ObjectOutputStream(gzipOutputStream)) {
+                    oos.writeObject(builder);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                printWARNING("Could not serialize CFA to file.");
+            }
+        });
+
+
+    }
 
 
     private static void dumpCFG(project target, String path) throws result{

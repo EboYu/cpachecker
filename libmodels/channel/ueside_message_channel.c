@@ -18,6 +18,9 @@ void uePushPlainNASESMMsgIntoCache(ESM_msg msg){
 	UE_channel_message_cache->nas_message.nas_message.plain.esm=msg;
 }
 
+void uePushPlainNASMsgIntoCache(nas_message_t msg){
+	UE_channel_message_cache->nas_message.nas_message=msg;
+}
 
 void uePushPlainASMsgIntoCache(as_message_t msg){
 	UE_channel_message_cache->nas_message.as_message=msg;
@@ -38,6 +41,15 @@ as_message_t uePullPlainASMsgFromCache(){
 	return msg;
 }
 
+nas_message_t uePullPlainNASMsgFromCache(){
+	nas_message_t msg = UE_channel_message_cache->nas_message.nas_message;
+	return msg;
+}
+
+nas_message_security_header_t uePullPlainNASHeaderFromCache(){
+	nas_message_security_header_t msg = UE_channel_message_cache->nas_message.nas_message.header;
+	return msg;
+}
 
 void uePushPlainULCCCHMessageIntoCache(LTE_UL_CCCH_Message_t msg){
 	UE_channel_message_cache->rrc_message.message.ul_ccch_msg = msg;

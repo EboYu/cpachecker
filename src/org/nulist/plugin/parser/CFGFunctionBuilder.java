@@ -21,6 +21,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.util.Pair;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -39,8 +40,9 @@ import static org.nulist.plugin.util.FileOperations.getLocation;
 import static org.nulist.plugin.model.action.ITTIAbstract.*;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.addEdgeUnconditionallyToCFA;
 
-public class CFGFunctionBuilder  {
+public class CFGFunctionBuilder implements Serializable {
 
+    public static final long serialVersionUID = -1912578750221832013L;
     // Data structure for maintaining our scope stack in a function
     private Deque<CFANode> locStack = new ArrayDeque<>();
 

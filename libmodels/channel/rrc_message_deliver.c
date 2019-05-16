@@ -64,7 +64,7 @@ void do_RRCConnectionRequest(){
     uePushPlainULCCCHMessageIntoCache(*ul_ccch_msg);
 }
 void fill_ue_capability(){
-    uePushPlainUECapMessageIntoCache();
+    uePushPlainUECapMessageIntoCache(*UE_EUTRA_Capability);
 }
 
 void do_SidelinkUEInformation(){
@@ -82,9 +82,7 @@ void do_ULInformationTransfer(){
 void do_MeasurementReport(){
    uePushPlainULDCCHMessageIntoCache(*ul_dcch_msg);
 }
-void fill_ue_capability(){
-    uePushPlainUECapMessageIntoCache(*UE_EUTRA_Capability);
-}
+
 void rrc_ue_process_securityModeCommand(){
     uePushPlainULDCCHMessageIntoCache(*ul_dcch_msg);
 }

@@ -16,6 +16,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.exceptions.UnrecognizedCodeException;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -29,7 +30,8 @@ import static org.nulist.plugin.util.FileOperations.readMCCMNCList;
 import static org.sosy_lab.cpachecker.cfa.ast.c.CIntegerLiteralExpression.ONE;
 import static org.sosy_lab.cpachecker.cfa.types.c.CVoidType.VOID;
 
-public class CFGHandleExpression {
+public class CFGHandleExpression implements Serializable {
+    public static final long serialVersionUID = 8560360679412730359L;
     private final CFGTypeConverter typeConverter;
     private final CBinaryExpressionBuilder binExprBuilder;
     public Map<Integer, CSimpleDeclaration> variableDeclarations;

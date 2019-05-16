@@ -22,6 +22,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.util.Pair;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -44,7 +45,9 @@ import static org.nulist.plugin.model.action.ITTIAbstract.*;
  * @Date 2/27/19 4:18 PM
  * @Version 1.0
  **/
-public class CFABuilder {
+public class CFABuilder implements Serializable {
+
+    public static final long serialVersionUID = 4040269724332602192L;
     public final LogManager logger;
     public final MachineModel machineModel;
 
@@ -174,27 +177,36 @@ public class CFABuilder {
                 }else if(!functionFilter(cu.name(),funcName)){
                     System.out.println(funcName);
                     CFGFunctionBuilder cfgFunctionBuilder = cfgFunctionBuilderMap.get(funcName);
-//                    if(funcName.equals("rrc_ue_task_abstract"))
-//                        System.out.println();
+                    if(funcName.equals("fill_ue_capability"))
+                        System.out.println(notfinishFunctionBuild(cu.name(),funcName)+" "+projectName);
                     if(!cfgFunctionBuilder.isFinished){
-                        cfgFunctionBuilder.visitFunction(!finishFunctionBuild(cu.name(),funcName));
+                        cfgFunctionBuilder.visitFunction(!notfinishFunctionBuild(cu.name(),funcName));
                     }
                 }
             }
         }
     }
 
-    private boolean finishFunctionBuild(String fileaname, String functionName){
+    private boolean notfinishFunctionBuild(String fileaname, String functionName){
         if(projectName.equals(UE)){
-            return  (fileaname.endsWith("asn1_msg.c")&& functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")) ||
+            return  functionName.equals("fill_ue_capability")||
+                    (fileaname.endsWith("asn1_msg.c")&& functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")) ||
                     functionName.equals("rrc_ue_process_securityModeCommand")||
                     functionName.equals("rrc_ue_process_ueCapabilityEnquiry")||
-                    functionName.equals("fill_ue_capability")||
+                    functionName.equals("rrc_ue_decode_dcch")||
+                    functionName.equals("rrc_ue_decode_ccch")||
+                    functionName.equals("decode_BCCH_DLSCH_Message")||
+                    functionName.equals("decode_PCCH_DLSCH_Message")||
+                    functionName.equals("decode_MCCH_Message")||
                     functionName.equals("nas_message_encode") ||//EMM message
                     functionName.equals("esm_msg_encode") ||//ESM message
                     functionName.equals("nas_message_decode") ||
                     functionName.equals("nas_message_decrypt") ||
-                    functionName.equals("_emm_as_send")||
+                    functionName.equals("_emm_as_send") ||
+                    functionName.equals("_emm_as_encode") ||
+                    functionName.equals("_emm_as_data_ind") ||
+                    functionName.equals("_emm_as_establish_cnf") ||
+                    functionName.equals("_emm_as_recv") ||
                     functionName.equals("uper_encode_to_buffer") ||
                     functionName.equals("uper_decode_complete") ||
                     functionName.equals("uper_decode");
@@ -204,10 +216,16 @@ public class CFABuilder {
                     functionName.equals("nas_message_decode") ||
                     functionName.equals("nas_message_decrypt") ||
                     functionName.equals("_emm_as_send") ||
+                    functionName.equals("_emm_as_encode") ||
+                    functionName.equals("_emm_as_data_ind") ||
+                    functionName.equals("_emm_as_establish_req") ||
+                    functionName.equals("_emm_as_recv") ||
                     functionName.equals("s1ap_generate_downlink_nas_transport");
         }else {//eNB
             return  (fileaname.endsWith("asn1_msg.c") && functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")&& !functionName.contains("Handover")) ||
                     functionName.equals("mac_rrc_data_req") ||
+                    functionName.equals("rrc_eNB_decode_ccch")||
+                    functionName.equals("rrc_eNB_decode_dcch") ||
                     functionName.equals("uper_encode_to_buffer") ||
                     functionName.equals("uper_decode_complete") ||
                     functionName.equals("uper_decode") ||
@@ -216,6 +234,7 @@ public class CFABuilder {
                     functionName.equals("s1ap_eNB_nas_non_delivery_ind");
         }
     }
+
 
     private boolean functionFilter(String filename, String functionName){
         return isITTITaskProcessFunction(functionName)||
@@ -229,6 +248,7 @@ public class CFABuilder {
                 functionName.equals("UE_thread")||
                 (projectName.equals(UE)&& filename.endsWith("asn1_msg.c") &&
                         (functionName.equals("do_MIB")||
+                                functionName.equals("do_MIB_SL")||
                                 functionName.equals("do_SIB1")||
                                 functionName.equals("do_SIB23")||
                                 functionName.equals("do_RRCConnectionSetup")||
@@ -405,8 +425,6 @@ public class CFABuilder {
             return false;
         }
     }
-
-
 
 
 }

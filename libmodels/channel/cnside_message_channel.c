@@ -12,6 +12,9 @@ void cnPushPlainNASEMMMsgIntoCache(EMM_msg msg){
 	CN_channel_message_cache->nas_message.nas_message.plain.emm=msg;
 }
 
+void cnPushPlainNASMsgIntoCache(nas_message_t msg){
+	CN_channel_message_cache->nas_message.nas_message=msg;
+}
 
 void cnPushPlainNASESMMsgIntoCache(ESM_msg msg){
 	CN_channel_message_cache->nas_message.nas_message.plain.esm=msg;
@@ -34,6 +37,16 @@ ESM_msg cnPullPlainNASESMMsgFromCache(){
 
 as_message_t cnPullPlainASMsgFromCache(){
 	as_message_t msg = CN_channel_message_cache->nas_message.as_message;
+	return msg;
+}
+
+nas_message_t cnPullPlainNASMsgFromCache(){
+	nas_message_t msg = CN_channel_message_cache->nas_message.nas_message;
+	return msg;
+}
+
+nas_message_security_header_t cnPullPlainNASHeaderFromCache(){
+	nas_message_security_header_t msg = CN_channel_message_cache->nas_message.nas_message.header;
 	return msg;
 }
 
