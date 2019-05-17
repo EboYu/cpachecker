@@ -62,12 +62,14 @@ public class CFGFunctionBuilder implements Serializable {
     public CFABuilder cfaBuilder;
     private boolean directAddEdge = false;
     public boolean isFinished = false;
+    public String originFunctionName;
 
     public CFGFunctionBuilder(
             LogManager pLogger,
             CFGTypeConverter typeConverter,
             procedure pFunction,
             String functionName,
+            String originFunctionName,
             String pFileName,
             CFABuilder cfaBuilder
             ) {
@@ -75,10 +77,10 @@ public class CFGFunctionBuilder implements Serializable {
         this.typeConverter = typeConverter;
         function = pFunction;
         this.functionName = functionName;
-
+        this.originFunctionName  = originFunctionName;
         fileName = pFileName;
         this.cfaBuilder = cfaBuilder;
-        expressionHandler = new CFGHandleExpression(pLogger,functionName,typeConverter);
+        expressionHandler = new CFGHandleExpression(pLogger,functionName,cfaBuilder.projectName,typeConverter);
         expressionHandler.setGlobalVariableDeclarations(cfaBuilder.expressionHandler.globalDeclarations);
     }
 
@@ -262,6 +264,9 @@ public class CFGFunctionBuilder implements Serializable {
     public void visitFunction(boolean finishend) throws result {
         assert function!=null && function.get_kind().equals(procedure_kind.getUSER_DEFINED());
 
+        if(functionName.contains("mme_app_handle_detach_req")){
+            System.out.println();
+        }
         //expressionHandler.setVariableDeclarations(variableDeclarations);
         //first visit: build nodes before traversing CFGs
         List<point> declSet = new ArrayList<>();
@@ -292,7 +297,7 @@ public class CFGFunctionBuilder implements Serializable {
                 symbol s = node.declared_symbol();
                 ast symbolAST = s.get_ast(ast_family.getC_UNNORMALIZED());
                 ast normalizedAST = s.get_ast();
-                if(isITTIUENASTaskProcessFunction(functionName) && normalizedAST.pretty_print().equals("users")){
+                if(isITTIUENASTaskProcessFunction(originFunctionName) && normalizedAST.pretty_print().equals("users")){
 
                 }else if(isVLAType(symbolAST.get(ast_ordinal.getBASE_TYPE()).as_ast()) &&
                         normalizedAST.get(ast_ordinal.getBASE_TYPE()).as_ast().pretty_print().contains("$temp")){
@@ -1072,6 +1077,7 @@ public class CFGFunctionBuilder implements Serializable {
         if(funcNameExpr instanceof CPointerExpression){
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params, null);
+            printf("PointerExpression:"+funcNameExpr.toString());
         }else if(typeConverter.isFunctionPointerType(funcNameExpr.getExpressionType())){
             //TODO it may be incorrect
             CType funcType  = typeConverter.getFuntionTypeFromFunctionPointer(funcNameExpr.getExpressionType());
@@ -1081,6 +1087,7 @@ public class CFGFunctionBuilder implements Serializable {
             CPointerExpression pointerExpression = new CPointerExpression(fileLocation, funcType, funcNameExpr);
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, pointerExpression, params, null);
+            printf("FunctionPointer:"+funcNameExpr.toString());
         }else if(funcNameExpr instanceof CFieldReference){
             CFieldReference fieldReference = (CFieldReference)funcNameExpr;
             CType refType = fieldReference.getExpressionType();
@@ -1094,9 +1101,11 @@ public class CFGFunctionBuilder implements Serializable {
                     functionType1, funcNameExpr);
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, pointerExpression, params, null);
+            printf("FieldReference:"+funcNameExpr.toString());
         }else if(((CIdExpression)funcNameExpr).getDeclaration() instanceof CParameterDeclaration){
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params, null);
+            printf("ParameterDeclaration:"+funcNameExpr.toString());
         }else {
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params,

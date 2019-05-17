@@ -20,7 +20,7 @@
 //  const void       *const opt_cell_gw_transport_address,  // unused
 //  const void       *const opt_relay_node_indicator)  // unused
 
-void s1ap_eNB_handle_nas_first_req(){
+void ENB_s1ap_eNB_handle_nas_first_req(){
     uint16_t mcc = (uint16_t)instance_p->mcc[ue_desc_p->selected_plmn_identity];
     uint16_t mnc = (uint16_t)instance_p->mnc[ue_desc_p->selected_plmn_identity];
     uint8_t length = (uint16_t)instance_p->mnc_digit_length[ue_desc_p->selected_plmn_identity];
@@ -65,7 +65,7 @@ void s1ap_eNB_handle_nas_first_req(){
 
 
 
-void s1ap_eNB_nas_uplink(){
+void ENB_s1ap_eNB_nas_uplink(){
     int index = ue_context_p->selected_plmn_identity;
     uint16_t mcc = (uint16_t)s1ap_eNB_instance_p->mcc[index];
     uint16_t mnc = (uint16_t)s1ap_eNB_instance_p->mnc[index];
@@ -113,7 +113,7 @@ void s1ap_eNB_nas_uplink(){
 
 
 
-void s1ap_eNB_nas_non_delivery_ind(){
+void ENB_s1ap_eNB_nas_non_delivery_ind(){
     MME_s1ap_mme_itti_nas_non_delivery_ind(
         (mme_ue_s1ap_id_t)ue_context_p->ue_initial_id,
         NULL,

@@ -163,8 +163,8 @@ int itti_send_msg_to_task_mme(task_id_t destination_task_id, instance_t instance
 
   message->ittiMsgHeader.destinationTaskId = destination_task_id;
   message->ittiMsgHeader.instance = instance;
-  message->ittiMsgHeader.lte_time.time.tv_sec = itti_desc.lte_time.time.tv_sec;
-  message->ittiMsgHeader.lte_time.time.tv_usec = itti_desc.lte_time.time.tv_usec;
+//  message->ittiMsgHeader.lte_time.time.tv_sec = itti_desc.lte_time.time.tv_sec;
+//  message->ittiMsgHeader.lte_time.time.tv_usec = itti_desc.lte_time.time.tv_usec;
 //  message_id = message->ittiMsgHeader.messageId;
 //  origin_task_id = message->ittiMsgHeader.originTaskId;
 //

@@ -50,6 +50,7 @@ import java.util.*;
 import static org.nulist.plugin.model.ChannelBuildOperation.*;
 import static org.nulist.plugin.model.channel.ChannelConstructer.*;
 import static org.nulist.plugin.parser.CFGParser.*;
+import static org.nulist.plugin.util.ClassTool.printWARNING;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.removeEdgeFromNodes;
 
 /**
@@ -160,138 +161,140 @@ public class ChannelBuilder {
         globalNodes.forEach(((integer, astNodes) -> {
             AstNode astNode = astNodes.get(1);
             switch (astNode.getEscapedCodeStr()){
-                case "s1ap_eNB_handle_nas_first_req":
-                case "s1ap_eNB_nas_uplink":
-                case "s1ap_eNB_nas_non_delivery_ind":
+                case "ENB_s1ap_eNB_handle_nas_first_req":
+                case "ENB_s1ap_eNB_nas_uplink":
+                case "ENB_s1ap_eNB_nas_non_delivery_ind":
                     CFGFunctionBuilder slapENBfunctionBuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
                     replaceFunctionInvocation((CompoundStatement)astNodes.get(astNodes.size()-1),slapENBfunctionBuilder);
                     break;
-                case "s1ap_generate_downlink_nas_transport":{
+                case "MME_s1ap_generate_downlink_nas_transport":{
                     CFGFunctionBuilder functionBuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
                     replaceFunctionInvocation((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
                 }break;
 
                 //push rrc message into cache
-                case "do_MIB":
-                case "do_SIB1":
-                case "do_SIB23":
-                case "do_RRCConnectionSetup":
-                case "do_RRCConnectionSetup_BR":
-                case "do_RRCConnectionReconfiguration_BR":
-                case "do_RRCConnectionReconfiguration":
-                case "do_RRCConnectionReestablishment":
-                case "do_RRCConnectionReestablishmentReject":
-                case "do_RRCConnectionReject":
-                case "do_RRCConnectionRelease":
-                case "do_MBSFNAreaConfig":
-                case "do_Paging":
-                case "do_UECapabilityEnquiry":
-                case "do_SecurityModeCommand":{
+                case "ENB_do_MIB":
+                case "ENB_do_SIB1":
+                case "ENB_do_SIB23":
+                case "ENB_do_RRCConnectionSetup":
+                case "ENB_do_RRCConnectionSetup_BR":
+                case "ENB_do_RRCConnectionReconfiguration_BR":
+                case "ENB_do_RRCConnectionReconfiguration":
+                case "ENB_do_RRCConnectionReestablishment":
+                case "ENB_do_RRCConnectionReestablishmentReject":
+                case "ENB_do_RRCConnectionReject":
+                case "ENB_do_RRCConnectionRelease":
+                case "ENB_do_MBSFNAreaConfig":
+                case "ENB_do_Paging":
+                case "ENB_do_UECapabilityEnquiry":
+                case "ENB_do_SecurityModeCommand":{
                     this.project = ENB;
                     CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "uper_encode_to_buffer");
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "ENB_uper_encode_to_buffer");
                 }break;
-                case "do_DLInformationTransfer":{
+                case "ENB_do_DLInformationTransfer":{
                     this.project = ENB;
                     CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "uper_encode_to_new_buffer");
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "ENB_uper_encode_to_new_buffer");
                 }break;
 
-                case "do_RRCConnectionRequest":
-                case "do_SidelinkUEInformation":
-                case "do_RRCConnectionSetupComplete":
-                case "do_RRCConnectionReconfigurationComplete":
-                case "do_MeasurementReport":
-                case "fill_ue_capability":
-                case "rrc_ue_process_ueCapabilityEnquiry":
-                case "rrc_ue_process_securityModeCommand":{
+                case "UE_do_RRCConnectionRequest":
+                case "UE_do_SidelinkUEInformation":
+                case "UE_do_RRCConnectionSetupComplete":
+                case "UE_do_RRCConnectionReconfigurationComplete":
+                case "UE_do_MeasurementReport":
+                case "UE_fill_ue_capability":
+                case "UE_rrc_ue_process_ueCapabilityEnquiry":
+                case "UE_rrc_ue_process_securityModeCommand":{
                     this.project = UE;
                     CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"uper_encode_to_buffer");
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_encode_to_buffer");
                 }break;
-                case "do_ULInformationTransfer":{
+                case "UE_do_ULInformationTransfer":{
                     this.project = UE;
                     CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"uper_encode_to_new_buffer");
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_encode_to_new_buffer");
                 }break;
 
                 //pull rrc message from cache
-                case "rrc_eNB_decode_ccch":{
+                case "ENB_rrc_eNB_decode_ccch":{
                     this.project = ENB;
                     CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"uper_decode");
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"ENB_uper_decode");
                 }break;
-                case "rrc_eNB_decode_dcch":{
+                case "ENB_rrc_eNB_decode_dcch":{
                     this.project = ENB;
                     CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"uper_decode");
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"ENB_uper_decode");
                 }break;
 
 
-                case "rrc_ue_decode_dcch"://uper_decode
-                case "rrc_ue_decode_ccch"://uper_decode
+                case "UE_rrc_ue_decode_dcch"://uper_decode
+                case "UE_rrc_ue_decode_ccch"://uper_decode
                 {
                     this.project = UE;
                     CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"uper_decode");
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_decode");
                 }break;
-                case "decode_BCCH_DLSCH_Message"://uper_decode_complete
-                case "decode_PCCH_DLSCH_Message"://uper_decode_complete
-                case "decode_MCCH_Message"://uper_decode_complete
+                case "UE_decode_BCCH_DLSCH_Message"://uper_decode_complete
+                case "UE_decode_PCCH_DLSCH_Message"://uper_decode_complete
+                case "UE_decode_MCCH_Message"://uper_decode_complete
                 {
                     this.project = UE;
                     CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"uper_decode_complete");
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_decode_complete");
                 }break;
 
-                case "UE_emm_as_send":{
+                case "UE__emm_as_send":{
                     this.project = UE;
-                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("UE",""));
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
                     insert2FunctionAssume((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder);
                 }
                     break;
-                case "UE_emm_as_encode":{
+                case "UE__emm_as_encode":{
                     this.project = UE;
-                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("UE",""));
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"nas_message_encode");
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_nas_message_encode");
                 }break;
-                case "UE_emm_as_data_ind":{
+                case "UE__emm_as_data_ind":{
                     this.project = UE;
-                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("UE",""));
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"nas_message_decrypt");
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_nas_message_decrypt");
                 }break;
 
                 //nas_message_decode
-                case "UE_emm_as_establish_cnf":
-                case "UE_emm_as_recv":{
+                case "UE__emm_as_establish_cnf":
+                case "UE__emm_as_recv":{
                     this.project = UE;
-                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("UE",""));
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"nas_message_decode");
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"UE_nas_message_decode");
                 }break;
 
-                case "MME_emm_as_send":{
+                case "MME__emm_as_send":{
                     this.project = MME;
-                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("MME",""));
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
                     insert2FunctionAssume((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder);
                 }break;
 
-                case "MME_emm_as_encode":{
+                case "MME__emm_as_encode":{
                     this.project = MME;
-                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("MME",""));
-                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"nas_message_encode");
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_encode");
                 }break;
-                case "MME_emm_as_data_ind": {
+                case "MME__emm_as_data_ind": {
                     this.project = MME;
-                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("MME",""));
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"nas_message_decrypt");
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_decrypt");
                 }break;
                 //nas_message_decode
-                case "MME_emm_as_establish_req":
-                case "MME_emm_as_recv":{
+                case "MME__emm_as_establish_req":
+                case "MME__emm_as_recv":{
                     this.project = MME;
-                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr().replace("MME",""));
-                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"nas_message_decode");
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_decode");
                 }break;
+                default:
+                    printWARNING("No such function: "+astNode.getEscapedCodeStr());break;
             }
         }));
     }
@@ -332,7 +335,7 @@ public class ChannelBuilder {
     }
 
     public void replaceFunctionInvocationWithReturn(CompoundStatement astNode, CFGFunctionBuilder functionBuilder, String functionName){
-        if(!functionBuilder.functionName.equals("rrc_eNB_decode_dcch")){
+        if(!functionBuilder.functionName.equals("ENB_rrc_eNB_decode_dcch")){
             CStatementEdge targetEdge = findFunctionCallEdge(functionBuilder, functionName).get(0);
             this.fileLocation = targetEdge.getFileLocation();
             CFANode prevNode = targetEdge.getPredecessor();
@@ -388,7 +391,7 @@ public class ChannelBuilder {
     }
 
     public void replaceFunctionInvocation(CompoundStatement astNode, CFGFunctionBuilder functionBuilder){
-        String name = functionBuilder.cfaBuilder.projectName.equals(ENB)?"s1ap_eNB_itti_send_sctp_data_req":"s1ap_mme_itti_send_sctp_request";
+        String name = functionBuilder.cfaBuilder.projectName.equals(ENB)?"ENB_s1ap_eNB_itti_send_sctp_data_req":"MME_s1ap_mme_itti_send_sctp_request";
 
         CFAEdge targetEdge = findFunctionCallEdge(functionBuilder, name).get(0);
         this.fileLocation = targetEdge.getFileLocation();
@@ -434,7 +437,7 @@ public class ChannelBuilder {
                             getDeclaration().
                             getName().equals(functionName)){
                         edgeList.add((CStatementEdge)edge);
-                        if(!functionBuilder.functionName.equals("rrc_eNB_decode_dcch"))
+                        if(!functionBuilder.functionName.equals("ENB_rrc_eNB_decode_dcch"))
                             return edgeList;
                         else if(edgeList.size()==2)
                             return edgeList;
@@ -655,6 +658,7 @@ public class ChannelBuilder {
         String functionName = astNodes.get(1).getEscapedCodeStr();
         CFGFunctionBuilder functionBuilder = new CFGFunctionBuilder(channelBuilder.logger,
                 channelBuilder.typeConverter, null,
+                functionName,
                 functionName,
                 filename,
                 channelBuilder);
@@ -1049,11 +1053,11 @@ public class ChannelBuilder {
     private CFunctionDeclaration getFunctionDelcaration(String functionName){
         CFunctionDeclaration functionDeclaration;
         if(functionName.startsWith("UE_"))
-            functionDeclaration= builderMap.get(UE).functionDeclarations.get(functionName.replace("UE_",""));
+            functionDeclaration= builderMap.get(UE).functionDeclarations.get(functionName);
         else if(functionName.startsWith("ENB_"))
-            functionDeclaration= builderMap.get(ENB).functionDeclarations.get(functionName.replace("ENB_",""));
+            functionDeclaration= builderMap.get(ENB).functionDeclarations.get(functionName);
         else if(functionName.startsWith("MME_"))
-            functionDeclaration= builderMap.get(MME).functionDeclarations.get(functionName.replace("MME_",""));
+            functionDeclaration= builderMap.get(MME).functionDeclarations.get(functionName);
         else
             functionDeclaration= channelBuilder.functionDeclarations.get(functionName);
         if(functionDeclaration==null)
@@ -1080,24 +1084,24 @@ public class ChannelBuilder {
         if(variableDel==null){
             switch (project){
                 case UE:
-                    variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(("UE_"+variableName).hashCode());
                     break;
                 case ENB:
-                    variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(("ENB_"+variableName).hashCode());
                     break;
                 case MME:
-                    variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(("MME_"+variableName).hashCode());
                     break;
             }
         }
         if(variableDel==null && filename.equals("itti_task_abstract")){
             if(functionBuilder.functionName.contains("ue")) {
-                variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(("UE_"+variableName).hashCode());
             }
             else if(functionBuilder.functionName.contains("enb"))
-                variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(("ENB_"+variableName).hashCode());
             else
-                variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(("MME_"+variableName).hashCode());
         }
 
         if(variableDel==null)

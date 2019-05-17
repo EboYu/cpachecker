@@ -25,8 +25,7 @@ package org.sosy_lab.cpachecker.cmdline;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toList;
-import static org.nulist.plugin.parser.CFGParser.ENB;
-import static org.nulist.plugin.parser.CFGParser.MME;
+import static org.nulist.plugin.parser.CFGParser.*;
 import static org.sosy_lab.common.io.DuplicateOutputStream.mergeStreams;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -190,7 +189,13 @@ public class CPAMain {
     CFGParser cfgParser = new CFGParser(logManager, MachineModel.LINUX64);
     try {
       ParseResult result = cfgParser.parseProject(target);
-      FunctionEntryNode main = result.getFunctions().get("main");
+      FunctionEntryNode main;
+      if(target.name().equals(UE))
+        main= result.getFunctions().get("UE_main");
+      else if(target.name().equals(ENB))
+        main= result.getFunctions().get("ENB_main");
+      else
+        main= result.getFunctions().get("MME_main");
       //System.out.println(main.toString()+":"+main.getFileLocation().getFileName());
       CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
       cfaCreator.createCFA(result,main);

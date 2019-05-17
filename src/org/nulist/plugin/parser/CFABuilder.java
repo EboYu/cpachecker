@@ -53,6 +53,7 @@ public class CFABuilder implements Serializable {
 
     public final CFGTypeConverter typeConverter;
     public String projectName ="";
+    public String projectPrefix="";
 
     public final List<Path> parsedFiles = new ArrayList<>();
 
@@ -70,6 +71,12 @@ public class CFABuilder implements Serializable {
         logger = pLogger;
         machineModel = pMachineModel;
         this.projectName = projectName;
+        if(projectName.equals(UE))
+            projectPrefix = "UE_";
+        else if(projectName.equals(ENB))
+            projectPrefix = "ENB_";
+        else if(projectName.equals(MME))
+            projectPrefix = "MME_";
 
         typeConverter = new CFGTypeConverter(logger);
 
@@ -79,7 +86,8 @@ public class CFABuilder implements Serializable {
         systemFunctions = new TreeMap<>();
         cfaNodes = TreeMultimap.create();
         globalVariableDeclarations = new ArrayList<>();
-        expressionHandler = new CFGHandleExpression(logger,"",typeConverter);
+        expressionHandler = new CFGHandleExpression(logger,"",projectName,typeConverter);
+
     }
 
 
@@ -131,12 +139,14 @@ public class CFABuilder implements Serializable {
                     funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
                     funcName.startsWith("dump_") ||
                     funcName.startsWith("memb_") ||
+                    funcName.contains("_constraint")||
                     functionDeclarations.containsKey(funcName)) //oai has inline functions and asn generated codes have several same functions
                 return;
 
             //System.out.println(funcName);
+            funcName=projectPrefix+funcName;
             CFGFunctionBuilder cfgFunctionBuilder =
-                    new CFGFunctionBuilder(logger, typeConverter, proc,funcName, pFileName, this);
+                    new CFGFunctionBuilder(logger, typeConverter, proc,funcName,proc.name(), pFileName, this);
             // add function declaration
             CFunctionDeclaration functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
 
@@ -172,15 +182,17 @@ public class CFABuilder implements Serializable {
                 if(funcName.equals("cmpint") ||
                         funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
                         funcName.equals("rrc_control_socket_init") ||
+                        funcName.contains("ASN_DEBUG")||
+                        funcName.contains("_ASN_STACK_OVERFLOW_CHECK")||
                         funcName.startsWith("dump_") || funcName.startsWith("memb_")|| funcName.equals("init_UE_stub_single_thread")){
 
                 }else if(!functionFilter(cu.name(),funcName)){
+                    funcName = projectPrefix+funcName;
                     System.out.println(funcName);
                     CFGFunctionBuilder cfgFunctionBuilder = cfgFunctionBuilderMap.get(funcName);
-                    if(funcName.equals("fill_ue_capability"))
-                        System.out.println(notfinishFunctionBuild(cu.name(),funcName)+" "+projectName);
                     if(!cfgFunctionBuilder.isFinished){
-                        cfgFunctionBuilder.visitFunction(!notfinishFunctionBuild(cu.name(),funcName));
+                        boolean nofinish = notfinishFunctionBuild(cu.name(),funcName.replace(projectPrefix,""));
+                        cfgFunctionBuilder.visitFunction(!nofinish);
                     }
                 }
             }
@@ -289,6 +301,7 @@ public class CFABuilder implements Serializable {
      **/
     private void visitGlobalItem(procedure global_initialization, String projectName) throws result {
 
+
         point_set pointSet = global_initialization.points();
         List<String> variableList = new ArrayList<>();
         for(point_set_iterator point_it = pointSet.cbegin();
@@ -315,13 +328,13 @@ public class CFABuilder implements Serializable {
 
                 // Support static and other storage classes
                 CStorageClass storageClass= getStorageClass(un_ast);
-                String normalizedName = variableName;
-
+                String normalizedName = projectPrefix+variableName;
                 if (storageClass == CStorageClass.STATIC) {
                     //file static
                     normalizedName = "static__"+normalizedName;
                     storageClass = CStorageClass.AUTO;
                 }
+
                 if(variableList.contains(normalizedName) && node.get_ast(ast_family.getC_NORMALIZED()).is_a(ast_class.getNC_BLOCKASSIGN())){
                     continue;
                 }
@@ -370,37 +383,6 @@ public class CFABuilder implements Serializable {
                 expressionHandler.globalDeclarations.put(normalizedName.hashCode(),(ADeclaration) newDecl);
             }
         }
-    }
-
-
-    /**
-     * @Description //set users as a global variable
-     * @Param []
-     * @return void
-     **/
-    public void insertUSERGlobalVar(){
-        String typename = "nas_user_t";
-        String variableName = "users";
-        CType type = typeConverter.typeCache.getOrDefault(typename.hashCode(),null);
-        if(type==null){
-            printWARNING("There is no type of "+typename);
-            return;
-        }
-
-        CPointerType pointerType = new CPointerType(false,false,type);
-
-        CStorageClass storageClass = CStorageClass.AUTO;
-        CSimpleDeclaration newDecl =
-                new CVariableDeclaration(
-                        FileLocation.DUMMY,
-                        true,
-                        storageClass,
-                        pointerType,
-                        variableName,
-                        variableName,
-                        variableName,
-                        null);
-        expressionHandler.globalDeclarations.put(variableName.hashCode(),(ADeclaration) newDecl);
     }
 
 

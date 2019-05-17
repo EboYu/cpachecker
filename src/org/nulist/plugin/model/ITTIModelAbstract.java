@@ -46,44 +46,6 @@ public class ITTIModelAbstract {
         this.machineModel = machineModel;
     }
 
-    public void buildITTI_ALLOC_NEW_MESSAGE()throws result{
-        for (compunit_procedure_iterator proc_it = itti_cu.procedures();
-             !proc_it.at_end(); proc_it.advance()) {
-            procedure proc = proc_it.current();
-            if(proc.name().equals("itti_alloc_new_message")){
-                String funcName = proc.name();
-                CFunctionDeclaration functionDeclaration =
-                        (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
-                if(functionDeclaration==null){
-                    printWARNING("Can not find itti_alloc_new_message");
-                    return;
-                }
-                if(!cfaBuilder.cfgFunctionBuilderMap.containsKey(funcName)){
-                    CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(logger,
-                            cfaBuilder.typeConverter,
-                            proc,
-                            funcName,itti_cu.name(),
-                            cfaBuilder);
-                    functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
-
-                    cfaBuilder.expressionHandler.globalDeclarations.put(funcName.hashCode(), functionDeclaration);
-                    // handle the function definition
-                    CFunctionEntryNode en = cfgFunctionBuilder.handleFunctionDefinition();
-                    cfaBuilder.functions.put(funcName, en);
-                    cfaBuilder.cfgFunctionBuilderMap.put(funcName,cfgFunctionBuilder);
-                    cfgFunctionBuilder.visitFunction(true);
-                }else {
-                    printWARNING("There exits function builder for itti_alloc_new_message");
-                    CFGFunctionBuilder cfgFunctionBuilder =cfaBuilder.cfgFunctionBuilderMap.get(funcName);
-                    cfgFunctionBuilder.visitFunction(true);
-                }
-            }
-            break;
-        }
-    }
-
-
-
     /*
      * @Description //copy the original function and inset msg as its input parameter
      * @Param [functionDeclaration]

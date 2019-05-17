@@ -59,14 +59,14 @@ public class ChannelBuildOperation {
      **/
     public static void generatCreateTasksENB(CFABuilder cfaBuilder, procedure createTasksENB)throws result {
         assert createTasksENB.name().equals(CREATE_TASKS);
-        String funcName = CREATE_TASKS;
+        String funcName = cfaBuilder.projectPrefix+CREATE_TASKS;
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
             printWARNING("Can not find"+ CREATE_TASKS);
             return;
         }
-        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(CREATE_TASKS)){
+        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(funcName)){
             printWARNING("Shall no builder of "+CREATE_TASKS);
             return;
         }
@@ -74,6 +74,7 @@ public class ChannelBuildOperation {
         CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                 cfaBuilder.typeConverter,
                 createTasksENB,
+                funcName,
                 CREATE_TASKS, createTasksENB.get_compunit().name(),
                 cfaBuilder);
         functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
@@ -96,14 +97,14 @@ public class ChannelBuildOperation {
      **/
     public static void generateCreateTasksUE(CFABuilder cfaBuilder, procedure createTasksUE)throws result {
         assert createTasksUE.name().equals(CREATE_TASKS_UE);
-        String funcName = CREATE_TASKS_UE;
+        String funcName = cfaBuilder.projectPrefix+CREATE_TASKS_UE;
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
-            printWARNING("Can not find"+ CREATE_TASKS_UE);
+            printWARNING("Can not find "+ CREATE_TASKS_UE);
             return;
         }
-        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(CREATE_TASKS_UE)){
+        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(funcName)){
             printWARNING("Shall no builder of "+CREATE_TASKS_UE);
             return;
         }
@@ -111,6 +112,7 @@ public class ChannelBuildOperation {
         CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                 cfaBuilder.typeConverter,
                 createTasksUE,
+                funcName,
                 CREATE_TASKS_UE, createTasksUE.get_compunit().name(),
                 cfaBuilder);
         functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
@@ -129,7 +131,7 @@ public class ChannelBuildOperation {
 
     public static void generateITTI_ALLOC_NEW_MESSAGE(CFABuilder cfaBuilder,procedure ittiAllocNewMessage)throws result{
         assert ittiAllocNewMessage.name().equals(ITTI_ALLOC_NEW_MESSAGE);
-        String funcName = ittiAllocNewMessage.name();
+        String funcName = cfaBuilder.projectPrefix+ittiAllocNewMessage.name();
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
@@ -140,7 +142,7 @@ public class ChannelBuildOperation {
             CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                     cfaBuilder.typeConverter,
                     ittiAllocNewMessage,
-                    funcName, ittiAllocNewMessage.get_compunit().name(),
+                    funcName, ITTI_ALLOC_NEW_MESSAGE, ittiAllocNewMessage.get_compunit().name(),
                     cfaBuilder);
             functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
 
@@ -429,7 +431,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode init = builder.newCFANode();
         CFunctionDeclaration enbinit = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("eNB_app_Initialize".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("ENB_eNB_app_Initialize".hashCode());
         if(enbinit==null)
             throw new RuntimeException("No eNB_app_Initialize function");
 
@@ -440,7 +442,7 @@ public class ChannelBuildOperation {
 
         CFunctionCallStatement cFunctionCallStatement = new CFunctionCallStatement(fileLocation, callExpression);
 
-        CStatementEdge statementEdge = new CStatementEdge("eNB_app_Initialize();",
+        CStatementEdge statementEdge = new CStatementEdge("ENB_eNB_app_Initialize();",
                 cFunctionCallStatement,fileLocation,thenNode,init);
         builder.addToCFA(statementEdge);
 
@@ -454,7 +456,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode rrcinit = builder.newCFANode();
         CFunctionDeclaration rrcinitD = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("rrc_enb_init".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("ENB_rrc_enb_init".hashCode());
         if(rrcinitD==null)
             throw new RuntimeException("No rrc_enb_init function");
 
@@ -596,11 +598,11 @@ public class ChannelBuildOperation {
                 startNumber,
                 startNumber);
         CFANode callocNode = builder.newCFANode();
-        CVariableDeclaration users = (CVariableDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("users".hashCode());
+        CVariableDeclaration users = (CVariableDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("UE_users".hashCode());
         if(users==null)
             throw new RuntimeException("No users variable");
 
-        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("calloc".hashCode());
+        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("UE_calloc".hashCode());
         if(calloc==null)
             throw new RuntimeException("No calloc function");
         List<CExpression> params = new ArrayList<>();
@@ -648,7 +650,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode init = builder.newCFANode();
         CFunctionDeclaration nasiniti = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("nas_ue_user_initialize".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("UE_nas_ue_user_initialize".hashCode());
         if(nasiniti==null)
             throw new RuntimeException("No nas_ue_user_initialize function");
 
@@ -659,7 +661,7 @@ public class ChannelBuildOperation {
 
         CFunctionCallStatement cFunctionCallStatement = new CFunctionCallStatement(fileLocation, callExpression);
 
-        statementEdge = new CStatementEdge("nas_ue_user_initialize();",
+        statementEdge = new CStatementEdge("UE_nas_ue_user_initialize();",
                 cFunctionCallStatement,fileLocation,countnode,init);
         builder.addToCFA(statementEdge);
         //

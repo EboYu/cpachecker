@@ -387,7 +387,8 @@ public class CFGTypeConverter implements Serializable {
             String memberTypeName = memberType.pretty_print();
             if(memberTypeName.endsWith("<UNNAMED>") || memberTypeName.endsWith("<unnamed>") ){
                 memberTypeName = handleUnnamedType(memberType);
-                //memberName = memberTypeName.replace(UNION_PREF,"");
+                if(memberName.equals(""))
+                    memberName = memberTypeName.replace(UNION_PREF,"");
             }
 
             if(typeMap.containsKey(memberTypeName)){

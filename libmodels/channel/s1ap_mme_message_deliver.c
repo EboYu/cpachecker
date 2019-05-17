@@ -6,7 +6,7 @@
 //    uint8_t *nas_pdu,  -- NULL
 //    uint32_t nas_pdu_length)  --0
 
-void s1ap_generate_downlink_nas_transport(){
+void MME_s1ap_generate_downlink_nas_transport(){
     ENB_s1ap_eNB_itti_send_nas_downlink_ind(
         (uint16_t)ue_id,
         (uint32_t)enb_ue_s1ap_id,
