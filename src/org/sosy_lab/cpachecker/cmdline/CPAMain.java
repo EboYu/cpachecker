@@ -38,10 +38,8 @@ import com.google.common.io.MoreFiles;
 import com.grammatech.cs.project;
 import com.grammatech.cs.result;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.StringWriter;
+
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +47,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.matheclipse.core.util.WriterOutputStream;
 import org.nulist.plugin.parser.CFABuilder;
@@ -70,15 +70,12 @@ import org.sosy_lab.common.io.IO;
 import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.common.log.LoggingOptions;
-import org.sosy_lab.cpachecker.cfa.CFA;
-import org.sosy_lab.cpachecker.cfa.CFACreator;
-import org.sosy_lab.cpachecker.cfa.ParseResult;
+import org.sosy_lab.cpachecker.cfa.*;
 import org.sosy_lab.cpachecker.cfa.ast.ADeclaration;
 import org.sosy_lab.cpachecker.cfa.export.DOTBuilder;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.cfa.model.FunctionEntryNode;
 import org.sosy_lab.cpachecker.cfa.types.MachineModel;
-import org.sosy_lab.cpachecker.cfa.Language;
 import org.sosy_lab.cpachecker.cmdline.CmdLineArguments.InvalidCmdlineArgumentException;
 import org.sosy_lab.cpachecker.core.CPAchecker;
 import org.sosy_lab.cpachecker.core.CPAcheckerResult;
@@ -139,6 +136,17 @@ public class CPAMain {
     GlobalInfo.getInstance().storeLogManager(logManager);
   }
 
+  public void ReadSearializedCFA(String cfafile){
+    final ShutdownManager shutdownManager = ShutdownManager.create();
+    final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
+    try {
+      CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
+      cfaCreator.readSerializedCFA(cfafile);
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+  }
+
   public void CFACombination(Map<String, CFABuilder> builderMap){
     NavigableMap<String, FunctionEntryNode> pFunctions = new TreeMap<>();
     SortedSetMultimap<String, CFANode> pCfaNodes = TreeMultimap.create();
@@ -152,7 +160,6 @@ public class CPAMain {
       pGlobalDeclarations.addAll(cfgBuilder.getGlobalVariableDeclarations());
       pFileNames.addAll(cfgBuilder.parsedFiles);
     }
-
 
     final ShutdownManager shutdownManager = ShutdownManager.create();
     final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();

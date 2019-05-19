@@ -498,6 +498,22 @@ private boolean classifyNodes = false;
     }
   }
 
+  public CFA readSerializedCFA(String cfaFile){
+    try {
+      try (InputStream inputStream = Files.newInputStream(Paths.get(cfaFile));
+           InputStream gzipInputStream = new GZIPInputStream(inputStream);
+           ObjectInputStream ois = new ObjectInputStream(gzipInputStream)) {
+        ImmutableCFA immutableCFA = (ImmutableCFA) ois.readObject();
+        return immutableCFA;
+      }
+    } catch (ClassNotFoundException e){
+      logger.logfUserException(Level.WARNING, e, "Class not found");
+    }catch (IOException e) {
+      logger.logUserException(Level.WARNING, e, "Could not read serialized CFA from file.");
+    }
+    return null;
+  }
+
 
   public CFA createCFA(ParseResult pParseResult, FunctionEntryNode pMainFunction) throws InvalidConfigurationException, InterruptedException, ParserException {
 

@@ -50,8 +50,6 @@ public abstract class ACastExpression extends AbstractLeftHandSide {
 
   @Override
   public String toASTString(boolean pQualified) {
-    if(getExpressionType()==null)
-      System.out.println(operand.toString()+" "+castType.toString());
     return "("
         + getExpressionType().toASTString("")
         + ")"

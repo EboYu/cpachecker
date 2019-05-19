@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static org.nulist.plugin.model.ChannelBuildOperation.doComposition;
@@ -60,9 +61,27 @@ public class CSurfPlugin {
             projectPath = args[1];
             arguments = args[2].split(" ");
         }
-        String projPath = System.getProperty("user.dir");
+
         //perform parser execution
+        readSerializedCFA(arguments,cpacheckPath);
+        //readCFGFiles(arguments,cpacheckPath,projectPath);
+
+    }
+
+    public static void readSerializedCFA(String[] arguments, String cpacheckPath){
+        String projPath = System.getProperty("user.dir");
+        CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
+        String cfafile = projPath+"/output/cfa.ser.gz";
+        File file = new File(cfafile);
+        if(file.exists())
+            cpaMain.ReadSearializedCFA(cfafile);
+        else
+            printWARNING("There is no cfa.ser.gz in "+cfafile);
+    }
+
+    public static void readCFGFiles(String[] arguments, String cpacheckPath, String projectPath){
         try{
+            String projPath = System.getProperty("user.dir");
             CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
             CFGParser cfgParser = new CFGParser(cpaMain.logManager, MachineModel.LINUX64);
             Map<String, CFABuilder> builderMap = new HashMap<>();
@@ -110,7 +129,7 @@ public class CSurfPlugin {
             printINFO("==================Finish MME==================");
             project.unload();
 
-            compareGlobalName(builderMap);
+//            compareGlobalName(builderMap);
             printINFO("==================Parsing Message Channel Model==================");
             FuzzyParser fuzzyParser = new FuzzyParser(cpaMain.logManager, MachineModel.LINUX64, builderMap);
 
@@ -125,7 +144,7 @@ public class CSurfPlugin {
                 for(CFGFunctionBuilder functionBuilder :cfgBuilder.cfgFunctionBuilderMap.values()){
                     if(!functionBuilder.isFinished)
                         functionBuilder.emptyFunction();
-                        //printf("The function :"+functionBuilder.functionName+" is not finished in "+key);
+                    //printf("The function :"+functionBuilder.functionName+" is not finished in "+key);
                 }
             }
             printINFO("==================Finish Message Channel Model==================");
@@ -136,8 +155,6 @@ public class CSurfPlugin {
         }catch(result r){
             System.out.println("Uncaught exception: " + r);
         }
-
-
     }
 
     private static void compareGlobalName(Map<String, CFABuilder> builderMap){
