@@ -259,7 +259,7 @@ analysis.initialStatesFor = Sets.newHashSet(InitialStatesFor.ENTRY)
 analysis.interprocedural = true
 
 # the machine model, which determines the sizes of types like int
-analysis.machineModel = LINUX32
+analysis.machineModel = LINUX64
   enum:     [LINUX32, LINUX64, ARM]
 
 # Use as targets for call edges only those shich are assigned to the
@@ -632,6 +632,9 @@ cfa.callgraph.file = "functionCalls.dot"
 
 # how often do we clone a function?
 cfa.cfaCloner.numberOfCopies = 5
+
+# Enable CFGParser to convert CFGs to CFA
+cfa.cfgParserEnable = true
 
 # while this option is activated, before each use of a PointerExpression, or
 # a dereferenced field access the expression is checked if it is 0
