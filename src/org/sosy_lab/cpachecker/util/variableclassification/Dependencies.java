@@ -86,6 +86,8 @@ class Dependencies {
 
       // if only left side of dependency exists, add right side into same partition
     } else if (partition1 != null) {
+      if(var2==null)
+        System.out.println(var1);
       partition1.add(var2);
 
       // if only right side of dependency exists, add left side into same partition

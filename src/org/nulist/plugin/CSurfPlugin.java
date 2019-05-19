@@ -111,7 +111,7 @@ public class CSurfPlugin {
             project.unload();
 
             compareGlobalName(builderMap);
-
+            printINFO("==================Parsing Message Channel Model==================");
             FuzzyParser fuzzyParser = new FuzzyParser(cpaMain.logManager, MachineModel.LINUX64, builderMap);
 
             String channelModelFile =projPath+"/libmodels/channel";
@@ -120,6 +120,17 @@ public class CSurfPlugin {
             if(builderMap.size()>1)
                 doComposition(builderMap);
 
+            for(String key: builderMap.keySet()){
+                CFABuilder cfgBuilder = builderMap.get(key);
+                for(CFGFunctionBuilder functionBuilder :cfgBuilder.cfgFunctionBuilderMap.values()){
+                    if(!functionBuilder.isFinished)
+                        functionBuilder.emptyFunction();
+                        //printf("The function :"+functionBuilder.functionName+" is not finished in "+key);
+                }
+            }
+            printINFO("==================Finish Message Channel Model==================");
+
+            cpaMain.CFACombination(builderMap);
 
             printINFO("==================CSURF_PLUGIN_END==================");
         }catch(result r){

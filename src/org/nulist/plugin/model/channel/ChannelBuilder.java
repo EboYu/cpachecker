@@ -149,6 +149,11 @@ public class ChannelBuilder {
                 parseInsert2Function("nas_message_deliver",driverList.get("nas_message_deliver"));
                 System.out.println("Parse "+ "nas_message_deliver");
             }
+
+            if(driverList.containsKey("scheduler")){
+                parseBuildFile("scheduler",driverList.get("scheduler"));
+                System.out.println("Parse "+ "scheduler");
+            }
         }
     }
 
@@ -448,27 +453,6 @@ public class ChannelBuilder {
         throw new RuntimeException("No such function: "+functionName+" is called in that location "+functionBuilder.functionName);
     }
 
-    private CFAEdge backTraceEdge(FunctionExitNode node, String targetFunctionName){
-        if(node.getNumEnteringEdges()!=0){
-            for(int i=0;i<node.getNumEnteringEdges();i++){
-                CFAEdge edge = node.getEnteringEdge(i);
-                if(edge instanceof CReturnStatementEdge && ((CReturnStatementEdge) edge).getExpression().get() instanceof CIntegerLiteralExpression){
-                    int returnValue = ((CIntegerLiteralExpression) ((CReturnStatementEdge) edge).getExpression().get()).getValue().intValue();
-                    if(returnValue==0){
-                        CFANode node1 = edge.getPredecessor();
-                        CFAEdge edge1 = node1.getEnteringEdge(0);
-                        if(edge1 instanceof CStatementEdge && ((CStatementEdge) edge1).getStatement() instanceof CFunctionCallStatement){
-                            if(((CFunctionCallStatement) ((CStatementEdge) edge1).getStatement()).
-                                    getFunctionCallExpression().getDeclaration().getName().equals(targetFunctionName))
-                                return edge1;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     public void parseBuildFile(String filename, AntlrCFunctionParserDriver driver){
         AstNode top = driver.builderStack.peek().getItem();
         this.filename = filename;
@@ -483,7 +467,6 @@ public class ChannelBuilder {
                     IdentifierDecl decl = (IdentifierDecl) ((IdentifierDeclStatement) astNode).getIdentifierDeclList().get(i);
                     CDeclaration declaration = parseVariableDeclaration(null, true, decl);
                     channelBuilder.expressionHandler.globalDeclarations.put(declaration.getName().hashCode(),declaration);
-
                 }
             }else if(astNode instanceof CompoundStatement){
                 functionDeclaration(astNodes);
@@ -705,6 +688,8 @@ public class ChannelBuilder {
                 paramTypes.add(type);
 
                 CParameterDeclaration parameterDeclaration = new CParameterDeclaration(fileLocation,type,param);
+                parameterDeclaration.setQualifiedName(param);
+                functionBuilder.expressionHandler.variableDeclarations.put(param.hashCode(),parameterDeclaration);
                 parameterDeclarations.add(parameterDeclaration);
             }
         }

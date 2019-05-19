@@ -47,6 +47,7 @@ void ENB_s1ap_eNB_handle_nas_first_req(){
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL);
 }
 

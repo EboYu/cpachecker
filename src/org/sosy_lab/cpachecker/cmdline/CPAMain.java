@@ -32,11 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.io.Closer;
 import com.google.common.io.MoreFiles;
 import com.grammatech.cs.project;
@@ -55,6 +51,8 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.matheclipse.core.util.WriterOutputStream;
+import org.nulist.plugin.parser.CFABuilder;
+import org.nulist.plugin.parser.CFGFunctionBuilder;
 import org.nulist.plugin.parser.CFGParser;
 import org.sosy_lab.common.Optionals;
 import org.sosy_lab.common.ShutdownManager;
@@ -75,6 +73,7 @@ import org.sosy_lab.common.log.LoggingOptions;
 import org.sosy_lab.cpachecker.cfa.CFA;
 import org.sosy_lab.cpachecker.cfa.CFACreator;
 import org.sosy_lab.cpachecker.cfa.ParseResult;
+import org.sosy_lab.cpachecker.cfa.ast.ADeclaration;
 import org.sosy_lab.cpachecker.cfa.export.DOTBuilder;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.cfa.model.FunctionEntryNode;
@@ -88,6 +87,7 @@ import org.sosy_lab.cpachecker.core.algorithm.pcc.ProofGenerator;
 import org.sosy_lab.cpachecker.core.counterexample.ReportGenerator;
 import org.sosy_lab.cpachecker.cpa.automaton.AutomatonGraphmlParser;
 import org.sosy_lab.cpachecker.cpa.testtargets.TestTargetType;
+import org.sosy_lab.cpachecker.util.Pair;
 import org.sosy_lab.cpachecker.util.Property;
 import org.sosy_lab.cpachecker.util.Property.CommonCoverageType;
 import org.sosy_lab.cpachecker.util.Property.CommonPropertyType;
@@ -139,16 +139,33 @@ public class CPAMain {
     GlobalInfo.getInstance().storeLogManager(logManager);
   }
 
-  public void parseProject(project target){
-    CFGParser cfgParser = new CFGParser(logManager,MachineModel.LINUX64);
-    try {
-      cfgParser.parseProject(target);
-      parserMap.put(target.name(),cfgParser);
-    }catch (result r){
+  public void CFACombination(Map<String, CFABuilder> builderMap){
+    NavigableMap<String, FunctionEntryNode> pFunctions = new TreeMap<>();
+    SortedSetMultimap<String, CFANode> pCfaNodes = TreeMultimap.create();
+    List<Pair<ADeclaration, String>> pGlobalDeclarations = new ArrayList<>();
+    List<Path> pFileNames = new ArrayList<>();
 
+    for(String key: builderMap.keySet()){
+      CFABuilder cfgBuilder = builderMap.get(key);
+      pFunctions.putAll(cfgBuilder.functions);
+      pCfaNodes.putAll(cfgBuilder.cfaNodes);
+      pGlobalDeclarations.addAll(cfgBuilder.getGlobalVariableDeclarations());
+      pFileNames.addAll(cfgBuilder.parsedFiles);
     }
-  }
 
+
+    final ShutdownManager shutdownManager = ShutdownManager.create();
+    final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
+    try {
+      ParseResult result = new ParseResult(pFunctions,pCfaNodes,pGlobalDeclarations,pFileNames);
+      FunctionEntryNode main = result.getFunctions().get("main");
+      CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
+      cfaCreator.createCFA(result,main);
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
 
 
 

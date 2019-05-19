@@ -114,8 +114,6 @@ public class CFABuilder implements Serializable {
     public void basicBuild(compunit cu, String projectName)throws result{
 
         String pFileName = cu.normalized_name();
-        if(pFileName.contains("channel_message"))
-         System.out.println(cu.name());
         // Iterate over all procedures in the compilation unit
         // procedure = function
 
