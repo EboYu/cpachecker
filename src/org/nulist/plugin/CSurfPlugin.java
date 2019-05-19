@@ -63,18 +63,18 @@ public class CSurfPlugin {
         }
 
         //perform parser execution
-        readSerializedCFA(arguments,cpacheckPath);
+        readSerializedCFA(arguments,cpacheckPath, projectPath);
         //readCFGFiles(arguments,cpacheckPath,projectPath);
 
     }
 
-    public static void readSerializedCFA(String[] arguments, String cpacheckPath){
+    public static void readSerializedCFA(String[] arguments, String cpacheckPath,String projectPath){
         String projPath = System.getProperty("user.dir");
         CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
         String cfafile = projPath+"/output/cfa.ser.gz";
         File file = new File(cfafile);
         if(file.exists())
-            cpaMain.ReadSearializedCFA(cfafile);
+            CPAMain.executeParser(arguments,cpacheckPath, projectPath, null);
         else
             printWARNING("There is no cfa.ser.gz in "+cfafile);
     }

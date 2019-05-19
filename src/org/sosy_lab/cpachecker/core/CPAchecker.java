@@ -221,7 +221,7 @@ public class CPAchecker {
             + "instead of parsed from sourcefile."
   )
   @FileOption(FileOption.Type.OPTIONAL_INPUT_FILE)
-  private @Nullable Path serializedCfaFile = null;
+  private @Nullable Path serializedCfaFile = Paths.get("output/cfa.ser.gz");//null;
 
   @Option(
     secure = true,
