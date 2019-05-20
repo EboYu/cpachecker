@@ -23,28 +23,23 @@
  */
 package org.sosy_lab.cpachecker.cmdline;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toList;
-import static org.nulist.plugin.parser.CFGParser.ENB;
-import static org.nulist.plugin.parser.CFGParser.MME;
+import static org.nulist.plugin.parser.CFGParser.*;
 import static org.sosy_lab.common.io.DuplicateOutputStream.mergeStreams;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.io.Closer;
 import com.google.common.io.MoreFiles;
 import com.grammatech.cs.project;
 import com.grammatech.cs.result;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.StringWriter;
+
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +47,12 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.matheclipse.core.util.WriterOutputStream;
+import org.nulist.plugin.parser.CFABuilder;
+import org.nulist.plugin.parser.CFGFunctionBuilder;
 import org.nulist.plugin.parser.CFGParser;
 import org.sosy_lab.common.Optionals;
 import org.sosy_lab.common.ShutdownManager;
@@ -71,14 +70,12 @@ import org.sosy_lab.common.io.IO;
 import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.common.log.LoggingOptions;
-import org.sosy_lab.cpachecker.cfa.CFA;
-import org.sosy_lab.cpachecker.cfa.CFACreator;
-import org.sosy_lab.cpachecker.cfa.ParseResult;
+import org.sosy_lab.cpachecker.cfa.*;
+import org.sosy_lab.cpachecker.cfa.ast.ADeclaration;
 import org.sosy_lab.cpachecker.cfa.export.DOTBuilder;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.cfa.model.FunctionEntryNode;
 import org.sosy_lab.cpachecker.cfa.types.MachineModel;
-import org.sosy_lab.cpachecker.cfa.Language;
 import org.sosy_lab.cpachecker.cmdline.CmdLineArguments.InvalidCmdlineArgumentException;
 import org.sosy_lab.cpachecker.core.CPAchecker;
 import org.sosy_lab.cpachecker.core.CPAcheckerResult;
@@ -87,6 +84,7 @@ import org.sosy_lab.cpachecker.core.algorithm.pcc.ProofGenerator;
 import org.sosy_lab.cpachecker.core.counterexample.ReportGenerator;
 import org.sosy_lab.cpachecker.cpa.automaton.AutomatonGraphmlParser;
 import org.sosy_lab.cpachecker.cpa.testtargets.TestTargetType;
+import org.sosy_lab.cpachecker.util.Pair;
 import org.sosy_lab.cpachecker.util.Property;
 import org.sosy_lab.cpachecker.util.Property.CommonCoverageType;
 import org.sosy_lab.cpachecker.util.Property.CommonPropertyType;
@@ -138,16 +136,43 @@ public class CPAMain {
     GlobalInfo.getInstance().storeLogManager(logManager);
   }
 
-  public void parseProject(project target){
-    CFGParser cfgParser = new CFGParser(logManager,MachineModel.LINUX64);
+  public void ReadSearializedCFA(String cfafile){
+    final ShutdownManager shutdownManager = ShutdownManager.create();
+    final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
     try {
-      cfgParser.parseProject(target);
-      parserMap.put(target.name(),cfgParser);
-    }catch (result r){
-
+      CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
+      cfaCreator.readSerializedCFA(cfafile);
+    }catch (Exception e){
+      e.printStackTrace();
     }
   }
 
+  public void CFACombination(Map<String, CFABuilder> builderMap){
+    NavigableMap<String, FunctionEntryNode> pFunctions = new TreeMap<>();
+    SortedSetMultimap<String, CFANode> pCfaNodes = TreeMultimap.create();
+    List<Pair<ADeclaration, String>> pGlobalDeclarations = new ArrayList<>();
+    List<Path> pFileNames = new ArrayList<>();
+
+    for(String key: builderMap.keySet()){
+      CFABuilder cfgBuilder = builderMap.get(key);
+      pFunctions.putAll(cfgBuilder.functions);
+      pCfaNodes.putAll(cfgBuilder.cfaNodes);
+      pGlobalDeclarations.addAll(cfgBuilder.getGlobalVariableDeclarations());
+      pFileNames.addAll(cfgBuilder.parsedFiles);
+    }
+
+    final ShutdownManager shutdownManager = ShutdownManager.create();
+    final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
+    try {
+      ParseResult result = new ParseResult(pFunctions,pCfaNodes,pGlobalDeclarations,pFileNames);
+      FunctionEntryNode main = result.getFunctions().get("main");
+      CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
+      cfaCreator.createCFA(result,main);
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
 
 
 
@@ -188,7 +213,13 @@ public class CPAMain {
     CFGParser cfgParser = new CFGParser(logManager, MachineModel.LINUX64);
     try {
       ParseResult result = cfgParser.parseProject(target);
-      FunctionEntryNode main = result.getFunctions().get("main");
+      FunctionEntryNode main;
+      if(target.name().equals(UE))
+        main= result.getFunctions().get("UE_main");
+      else if(target.name().equals(ENB))
+        main= result.getFunctions().get("ENB_main");
+      else
+        main= result.getFunctions().get("MME_main");
       //System.out.println(main.toString()+":"+main.getFileLocation().getFileName());
       CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
       cfaCreator.createCFA(result,main);
@@ -360,7 +391,7 @@ public class CPAMain {
       dumpConfiguration(options, cpaConfig, logManager);
 
       // generate correct frontend based on file language
-      cpaConfig = extractFrontendfromFileending(options, cpaConfig, logManager);
+      cpaConfig = detectFrontendLanguageIfNecessary(options, cpaConfig, logManager);
 
       limits = ResourceLimitChecker.fromConfiguration(cpaConfig, logManager, shutdownManager);
       limits.start();
@@ -460,8 +491,9 @@ public class CPAMain {
     private boolean printUsedOptions = false;
   }
 
+  @VisibleForTesting
   @Options
-  private static class MainOptions {
+  protected static class MainOptions {
     @Option(
       secure = true,
       name = "analysis.programNames",
@@ -470,7 +502,9 @@ public class CPAMain {
     )
     private ImmutableList<String> programs = ImmutableList.of();
 
-    @Option(secure = true, description = "C, Java, or LLVM IR?")
+    @Option(secure=true,
+        description="Programming language of the input program. If not given explicitly, "
+            + "auto-detection will occur")
     // keep option name in sync with {@link CFACreator#language}, value might differ
     private Language language = null;
 
@@ -591,58 +625,74 @@ public class CPAMain {
           " Please specify a language directly with the option 'language=%s'.",
           Arrays.toString(Language.values()));
 
-  /** determine the frontend language based on the file endings of the given programs. */
-  private static Configuration extractFrontendfromFileending(
+  /**
+   * Determines the frontend language based on the file endings of the given programs, if no
+   * language is given by the user. If a language is detected, it is set in the given {@link
+   * MainOptions} object and a new configuration for that language, based on the given
+   * configuration, is returned.
+   */
+  @VisibleForTesting
+  static Configuration detectFrontendLanguageIfNecessary(
       MainOptions pOptions, Configuration pConfig, LogManager pLogManager)
       throws InvalidConfigurationException {
     if (pOptions.language == null) {
       // if language was not specified by option, we determine the best matching language
-      Language frontendLanguage = null;
-      for (String program : pOptions.programs) {
-        Language language;
-        String suffix = program.substring(program.lastIndexOf(".") + 1);
-        switch (suffix) {
-          case "c":
-          case "i":
-          case "h":
-            language = Language.C;
-            break;
-          case "ll":
-          case "bc":
-            language = Language.LLVM;
-            break;
-          case "java":
-            language = Language.JAVA;
-            break;
-          default:
-            throw new InvalidConfigurationException(
-                String.format(
-                        "Cannot determine language from file '%s' with suffix '.%s'.",
-                        program, suffix)
-                    + LANGUAGE_HINT);
-        }
-        Preconditions.checkNotNull(language);
-        if (frontendLanguage == null) { // first iteration
-          frontendLanguage = language;
-        }
-        if (frontendLanguage != language) { // further iterations: check for conflicting endings
-          throw new InvalidConfigurationException(
-              String.format(
-                      "Differing file formats detected: %s and %s files are declared for analysis.",
-                      frontendLanguage, language)
-                  + LANGUAGE_HINT);
-        }
+      Language frontendLanguage;
+      if (areJavaOptionsSet(pConfig)) {
+        frontendLanguage = Language.JAVA;
+      } else {
+        frontendLanguage = detectFrontendLanguageFromFileEndings(pOptions.programs);
       }
       Preconditions.checkNotNull(frontendLanguage);
       ConfigurationBuilder configBuilder = Configuration.builder();
       configBuilder.copyFrom(pConfig);
-      configBuilder.setOption("language", frontendLanguage.toString());
+      configBuilder.setOption("language", frontendLanguage.name());
       pConfig = configBuilder.build();
       pOptions.language = frontendLanguage;
       pLogManager.logf(Level.INFO, "Language %s detected and set for analysis", frontendLanguage);
     }
     Preconditions.checkNotNull(pOptions.language);
     return pConfig;
+  }
+
+  @SuppressWarnings("deprecation") // checking the properties directly is more maintainable
+  private static boolean areJavaOptionsSet(Configuration pConfig) {
+    // Make sure to keep this synchronized with EclipseJavaParser
+    return pConfig.hasProperty("java.sourcepath") || pConfig.hasProperty("java.classpath");
+  }
+
+  private static Language detectFrontendLanguageFromFileEndings(ImmutableList<String> pPrograms)
+      throws InvalidConfigurationException {
+    checkArgument(!pPrograms.isEmpty(), "Empty list of programs");
+    Language frontendLanguage = null;
+    for (String program : pPrograms) {
+      Language language;
+      String suffix = program.substring(program.lastIndexOf(".") + 1);
+      switch (suffix) {
+        case "ll":
+        case "bc":
+          language = Language.LLVM;
+          break;
+        case "c":
+        case "i":
+        case "h":
+        default:
+          language = Language.C;
+          break;
+      }
+      Preconditions.checkNotNull(language);
+      if (frontendLanguage == null) { // first iteration
+        frontendLanguage = language;
+      }
+      if (frontendLanguage != language) { // further iterations: check for conflicting endings
+        throw new InvalidConfigurationException(
+            String.format(
+                    "Differing file formats detected: %s and %s files are declared for analysis.",
+                    frontendLanguage, language)
+                + LANGUAGE_HINT);
+      }
+    }
+    return frontendLanguage;
   }
 
   private static final ImmutableMap<Property, TestTargetType> TARGET_TYPES =
@@ -926,6 +976,9 @@ public class CPAMain {
         stream = makePrintStream(mergeStreams(System.out, file)); // ensure that result is printed to System.out
       }
       mResult.printResult(stream);
+
+      // write output files
+      mResult.writeOutputFiles();
 
       if (outputDirectory != null) {
         stream.println("More details about the verification run can be found in the directory \"" + outputDirectory + "\".");

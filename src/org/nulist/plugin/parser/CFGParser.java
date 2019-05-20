@@ -114,7 +114,8 @@ public class CFGParser implements Parser{
         proc = project.find_procedure(ITTI_SEND_MSG_TO_TASKS);
         //procedure proc1 = project.find_procedure(ITTI_SEND_MSG_TO_TASKS+extendSuffix);
         if(proc!=null){
-            cfaBuilder.buildGlobalDeclaration(proc, project.name(), true);
+            //cfaBuilder.buildGlobalDeclaration(proc, project.name(), true);
+
         }
 
         parseTimer.stop();
@@ -195,7 +196,7 @@ public class CFGParser implements Parser{
                         !name.endsWith("intertask_interface.c") &&
                         !name.endsWith("intertask_interface_dump.c") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/utils") && !name.contains("openair-cn/src/utils/log") && projectName.equals(MME)) ||
-                (name.contains("CMakeFiles/r10.5") && projectName.equals(MME));//s1ap
+                (name.contains("CMakeFiles/r10.5/S1ap") && projectName.equals(MME));//s1ap
     }
 
     @Override

@@ -59,14 +59,14 @@ public class ChannelBuildOperation {
      **/
     public static void generatCreateTasksENB(CFABuilder cfaBuilder, procedure createTasksENB)throws result {
         assert createTasksENB.name().equals(CREATE_TASKS);
-        String funcName = CREATE_TASKS;
+        String funcName = cfaBuilder.projectPrefix+CREATE_TASKS;
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
             printWARNING("Can not find"+ CREATE_TASKS);
             return;
         }
-        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(CREATE_TASKS)){
+        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(funcName)){
             printWARNING("Shall no builder of "+CREATE_TASKS);
             return;
         }
@@ -74,6 +74,7 @@ public class ChannelBuildOperation {
         CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                 cfaBuilder.typeConverter,
                 createTasksENB,
+                funcName,
                 CREATE_TASKS, createTasksENB.get_compunit().name(),
                 cfaBuilder);
         functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
@@ -96,14 +97,14 @@ public class ChannelBuildOperation {
      **/
     public static void generateCreateTasksUE(CFABuilder cfaBuilder, procedure createTasksUE)throws result {
         assert createTasksUE.name().equals(CREATE_TASKS_UE);
-        String funcName = CREATE_TASKS_UE;
+        String funcName = cfaBuilder.projectPrefix+CREATE_TASKS_UE;
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
-            printWARNING("Can not find"+ CREATE_TASKS_UE);
+            printWARNING("Can not find "+ CREATE_TASKS_UE);
             return;
         }
-        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(CREATE_TASKS_UE)){
+        if(cfaBuilder.cfgFunctionBuilderMap.containsKey(funcName)){
             printWARNING("Shall no builder of "+CREATE_TASKS_UE);
             return;
         }
@@ -111,6 +112,7 @@ public class ChannelBuildOperation {
         CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                 cfaBuilder.typeConverter,
                 createTasksUE,
+                funcName,
                 CREATE_TASKS_UE, createTasksUE.get_compunit().name(),
                 cfaBuilder);
         functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
@@ -129,7 +131,7 @@ public class ChannelBuildOperation {
 
     public static void generateITTI_ALLOC_NEW_MESSAGE(CFABuilder cfaBuilder,procedure ittiAllocNewMessage)throws result{
         assert ittiAllocNewMessage.name().equals(ITTI_ALLOC_NEW_MESSAGE);
-        String funcName = ittiAllocNewMessage.name();
+        String funcName = cfaBuilder.projectPrefix+ittiAllocNewMessage.name();
         CFunctionDeclaration functionDeclaration =
                 (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get(funcName.hashCode());
         if(functionDeclaration==null){
@@ -140,7 +142,7 @@ public class ChannelBuildOperation {
             CFGFunctionBuilder cfgFunctionBuilder = new CFGFunctionBuilder(cfaBuilder.logger,
                     cfaBuilder.typeConverter,
                     ittiAllocNewMessage,
-                    funcName, ittiAllocNewMessage.get_compunit().name(),
+                    funcName, ITTI_ALLOC_NEW_MESSAGE, ittiAllocNewMessage.get_compunit().name(),
                     cfaBuilder);
             functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
 
@@ -225,71 +227,6 @@ public class ChannelBuildOperation {
             functionBuilder.addToCFA(returnStatementEdge);
             functionBuilder.finish();
         }
-    }
-
-    public static void postAssociateFunctions(CFABuilder cfaBuilder, CFGFunctionBuilder builder, String functionName){
-        for(CFANode node:builder.cfaNodes){
-            if(node.getNumLeavingEdges()>0)
-                for(int i=0;i<node.getNumLeavingEdges();i++){
-                    traverseEdges(cfaBuilder, builder,node.getLeavingEdge(i), functionName);
-                }
-        }
-    }
-
-    /**
-     * @Description //insert function call
-     * @Param [edge]
-     * @return void
-     **/
-    private static void traverseEdges(CFABuilder cfaBuilder, CFGFunctionBuilder builder, CFAEdge edge, String functionName){
-        if(edge instanceof CAssumeEdge && ((CAssumeEdge) edge).getTruthAssumption()){
-            CExpression conditionExpr = ((CAssumeEdge) edge).getExpression();
-            if(conditionExpr instanceof CBinaryExpression){
-                CExpression operand1 = ((CBinaryExpression) conditionExpr).getOperand1();
-                if(operand1 instanceof CIdExpression){
-                    if(((CIdExpression) operand1).getName().equals("destination_task_id")){
-                        int taskID = ((CIntegerLiteralExpression)((CBinaryExpression) conditionExpr).getOperand2()).getValue().intValue();
-                        CType type = ((CBinaryExpression) conditionExpr).getOperand1().getExpressionType();
-                        String taskName = getTaskOrMsgNameByID(type, taskID);
-                        CFunctionDeclaration functionDeclaration = itti_send_to_task(taskName,cfaBuilder.projectName,cfaBuilder.expressionHandler);
-                        if(functionDeclaration!=null){
-                            routingTask(cfaBuilder,builder,functionDeclaration,edge,functionName);
-                        }else if(isITTITaskForDeliver(taskName)){
-
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-
-    private static void routingTask(CFABuilder cfaBuilder, CFGFunctionBuilder builder, CFunctionDeclaration functionDeclaration, CFAEdge caseEdge,  String functionName){
-        CFANode caseNextNode = caseEdge.getSuccessor();
-        CFAEdge breakEdge = caseNextNode.getLeavingEdge(0);
-        CFANode cfaNode = new CFANode(functionName);
-        caseNextNode.removeLeavingEdge(breakEdge);
-        CFANode breakNode = breakEdge.getSuccessor();
-        breakNode.removeEnteringEdge(breakEdge);
-
-        CParameterDeclaration input = builder.functionDeclaration.getParameters().get(2);
-        List<CExpression> params = new ArrayList<>();
-        FileLocation fileLocation = breakEdge.getFileLocation();
-        CExpression param = builder.expressionHandler.getAssignedIdExpression(input.asVariableDeclaration(),input.getType(),fileLocation);
-        params.add(param);
-        CExpression functionCallExpr = new CIdExpression(fileLocation,functionDeclaration.getType(), functionDeclaration.getName(), functionDeclaration);
-
-        CFunctionCallExpression expression = new CFunctionCallExpression(fileLocation,functionDeclaration.getType(), functionCallExpr, params, functionDeclaration);
-
-        CFunctionCallStatement cFunctionCallStatement = new CFunctionCallStatement(fileLocation, expression);
-        String rawCharacters = functionDeclaration.getName()+"("+param.toString()+");";
-        CStatementEdge statementEdge = new CStatementEdge(rawCharacters,cFunctionCallStatement,
-                fileLocation, caseNextNode, cfaNode);
-        builder.addToCFA(statementEdge);
-        BlankEdge blankEdge = new BlankEdge(breakEdge.getRawStatement(),breakEdge.getFileLocation(),cfaNode,breakNode,breakEdge.getDescription());
-        builder.addToCFA(blankEdge);
-        cfaBuilder.addNode(functionName,cfaNode);
     }
 
     public static String getTaskOrMsgNameByID(CType type, int id){
@@ -429,7 +366,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode init = builder.newCFANode();
         CFunctionDeclaration enbinit = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("eNB_app_Initialize".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("ENB_eNB_app_Initialize".hashCode());
         if(enbinit==null)
             throw new RuntimeException("No eNB_app_Initialize function");
 
@@ -440,7 +377,7 @@ public class ChannelBuildOperation {
 
         CFunctionCallStatement cFunctionCallStatement = new CFunctionCallStatement(fileLocation, callExpression);
 
-        CStatementEdge statementEdge = new CStatementEdge("eNB_app_Initialize();",
+        CStatementEdge statementEdge = new CStatementEdge("ENB_eNB_app_Initialize();",
                 cFunctionCallStatement,fileLocation,thenNode,init);
         builder.addToCFA(statementEdge);
 
@@ -454,7 +391,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode rrcinit = builder.newCFANode();
         CFunctionDeclaration rrcinitD = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("rrc_enb_init".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("ENB_rrc_enb_init".hashCode());
         if(rrcinitD==null)
             throw new RuntimeException("No rrc_enb_init function");
 
@@ -596,11 +533,11 @@ public class ChannelBuildOperation {
                 startNumber,
                 startNumber);
         CFANode callocNode = builder.newCFANode();
-        CVariableDeclaration users = (CVariableDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("users".hashCode());
+        CVariableDeclaration users = (CVariableDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("UE_users".hashCode());
         if(users==null)
             throw new RuntimeException("No users variable");
 
-        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("calloc".hashCode());
+        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("UE_calloc".hashCode());
         if(calloc==null)
             throw new RuntimeException("No calloc function");
         List<CExpression> params = new ArrayList<>();
@@ -648,7 +585,7 @@ public class ChannelBuildOperation {
                 startNumber);
         CFANode init = builder.newCFANode();
         CFunctionDeclaration nasiniti = (CFunctionDeclaration)
-                cfaBuilder.expressionHandler.globalDeclarations.get("nas_ue_user_initialize".hashCode());
+                cfaBuilder.expressionHandler.globalDeclarations.get("UE_nas_ue_user_initialize".hashCode());
         if(nasiniti==null)
             throw new RuntimeException("No nas_ue_user_initialize function");
 
@@ -659,7 +596,7 @@ public class ChannelBuildOperation {
 
         CFunctionCallStatement cFunctionCallStatement = new CFunctionCallStatement(fileLocation, callExpression);
 
-        statementEdge = new CStatementEdge("nas_ue_user_initialize();",
+        statementEdge = new CStatementEdge("UE_nas_ue_user_initialize();",
                 cFunctionCallStatement,fileLocation,countnode,init);
         builder.addToCFA(statementEdge);
         //
@@ -751,9 +688,6 @@ public class ChannelBuildOperation {
 
     }
 
-    private static void insertRRCMessage2MSGChannel(CFGFunctionBuilder functionBuilder, CFunctionDeclaration functionDeclaration){
-        //
-    }
 
     private static void pullNASMsgFromChannel(CFABuilder builder, CFABuilder ueBuilder){
         CFGFunctionBuilder encodeBuilder = builder.cfgFunctionBuilderMap.get("nas_message_decode");
@@ -955,16 +889,6 @@ public class ChannelBuildOperation {
         return null;
     }
 
-    //TODO component initialization
-
-
-
-    //TODO remove encode and decode procedures and deliver original message
-    //TODO for RRC: start from the uper_encode_to_buffer (message out) to build channel
-    //TODO for NAS: start from the emm_as.c->_emm_as_data_req->_emm_as_encode/_emm_as_encrypt (message out) to build channel
-    //TODO the message transferred in the channle shall be assigned a tag respesenting the message is encrypted, protected, or plain
-
-
     //on the sneder, when meet with nas_message_encode/encrypt --> push the message into the channel cache
     //wait for itti_send_msg_to_task to PDCP, and ask call channel message deliver to the receiver itti_send_msg_to_task RRC
     //on the receiver, start from the itti_send_msg_to_task RRC, go to RRC layer and extract message from the channel cache to perform
@@ -972,9 +896,6 @@ public class ChannelBuildOperation {
     //need a set for RRC+EMM+ESM three messages as a message
     //thus, need to cache each sub message and wait the set is full
     //but not each set has all three messages
-    public static void buildChannel(AbstractChannel channel){
-
-    }
 
 
 }

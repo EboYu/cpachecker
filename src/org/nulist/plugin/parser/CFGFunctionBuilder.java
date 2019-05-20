@@ -21,6 +21,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.util.Pair;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -39,8 +40,9 @@ import static org.nulist.plugin.util.FileOperations.getLocation;
 import static org.nulist.plugin.model.action.ITTIAbstract.*;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.addEdgeUnconditionallyToCFA;
 
-public class CFGFunctionBuilder  {
+public class CFGFunctionBuilder implements Serializable {
 
+    public static final long serialVersionUID = -1912578750221832013L;
     // Data structure for maintaining our scope stack in a function
     private Deque<CFANode> locStack = new ArrayDeque<>();
 
@@ -60,12 +62,14 @@ public class CFGFunctionBuilder  {
     public CFABuilder cfaBuilder;
     private boolean directAddEdge = false;
     public boolean isFinished = false;
+    public String originFunctionName;
 
     public CFGFunctionBuilder(
             LogManager pLogger,
             CFGTypeConverter typeConverter,
             procedure pFunction,
             String functionName,
+            String originFunctionName,
             String pFileName,
             CFABuilder cfaBuilder
             ) {
@@ -73,10 +77,10 @@ public class CFGFunctionBuilder  {
         this.typeConverter = typeConverter;
         function = pFunction;
         this.functionName = functionName;
-
+        this.originFunctionName  = originFunctionName;
         fileName = pFileName;
         this.cfaBuilder = cfaBuilder;
-        expressionHandler = new CFGHandleExpression(pLogger,functionName,typeConverter);
+        expressionHandler = new CFGHandleExpression(pLogger,functionName,cfaBuilder.projectName,typeConverter);
         expressionHandler.setGlobalVariableDeclarations(cfaBuilder.expressionHandler.globalDeclarations);
     }
 
@@ -86,13 +90,6 @@ public class CFGFunctionBuilder  {
 
     public FunctionEntryNode getCfa() {
         return cfa;
-    }
-
-    public FunctionEntryNode getFunctionEntryNode(point functionEntry) throws result{
-        if(functionEntry.get_procedure().get_kind().equals(procedure_kind.getUSER_DEFINED()))
-            return cfaBuilder.functions.get(functionEntry.get_procedure().name());
-        else
-            return cfaBuilder.systemFunctions.get(functionEntry.get_procedure().name());
     }
 
     public void setCfa(FunctionEntryNode cfa) {
@@ -208,8 +205,8 @@ public class CFGFunctionBuilder  {
         return entry;
     }
 
-    public void emptyFunction() throws result {
-        assert function!=null && function.get_kind().equals(procedure_kind.getUSER_DEFINED());
+    public void emptyFunction(){
+        //assert function!=null && function.get_kind().equals(procedure_kind.getUSER_DEFINED());
 
         CFANode prevNode = cfa;
         CFANode nextNode = cfa.getExitNode();
@@ -219,9 +216,10 @@ public class CFGFunctionBuilder  {
             final BlankEdge dummyEdge = new BlankEdge("", FileLocation.DUMMY,
                     prevNode, cfaNode, "Function start dummy edge");
             addToCFA(dummyEdge);
+
             FileLocation fileLocation = new FileLocation(fileName,0,1,
-                    (int)function.file_line().get_second()+1,
-                    (int)function.file_line().get_second()+1);
+                    cfa.getFileLocation().getEndingLineNumber(),
+                    cfa.getFileLocation().getEndingLineNumber());
             CExpression returnExpr = CIntegerLiteralExpression.ZERO;
             CVariableDeclaration returnVar = (CVariableDeclaration) cfa.getReturnVariable().get();
             CExpression returnVarExpr = new CIdExpression(fileLocation,
@@ -290,7 +288,7 @@ public class CFGFunctionBuilder  {
                 symbol s = node.declared_symbol();
                 ast symbolAST = s.get_ast(ast_family.getC_UNNORMALIZED());
                 ast normalizedAST = s.get_ast();
-                if(isITTIUENASTaskProcessFunction(functionName) && normalizedAST.pretty_print().equals("users")){
+                if(isITTIUENASTaskProcessFunction(originFunctionName) && normalizedAST.pretty_print().equals("users")){
 
                 }else if(isVLAType(symbolAST.get(ast_ordinal.getBASE_TYPE()).as_ast()) &&
                         normalizedAST.get(ast_ordinal.getBASE_TYPE()).as_ast().pretty_print().contains("$temp")){
@@ -366,6 +364,7 @@ public class CFGFunctionBuilder  {
         for(basic_block block:blockList)
             traverseCFGNode(block.first_point(),block);
     }
+
 
     public void finish(){
         for(CFANode node:cfaNodes){
@@ -1070,6 +1069,7 @@ public class CFGFunctionBuilder  {
         if(funcNameExpr instanceof CPointerExpression){
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params, null);
+//            printf("PointerExpression:"+funcNameExpr.toString());
         }else if(typeConverter.isFunctionPointerType(funcNameExpr.getExpressionType())){
             //TODO it may be incorrect
             CType funcType  = typeConverter.getFuntionTypeFromFunctionPointer(funcNameExpr.getExpressionType());
@@ -1079,6 +1079,7 @@ public class CFGFunctionBuilder  {
             CPointerExpression pointerExpression = new CPointerExpression(fileLocation, funcType, funcNameExpr);
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, pointerExpression, params, null);
+//            printf("FunctionPointer:"+funcNameExpr.toString());
         }else if(funcNameExpr instanceof CFieldReference){
             CFieldReference fieldReference = (CFieldReference)funcNameExpr;
             CType refType = fieldReference.getExpressionType();
@@ -1092,9 +1093,11 @@ public class CFGFunctionBuilder  {
                     functionType1, funcNameExpr);
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, pointerExpression, params, null);
+//            printf("FieldReference:"+funcNameExpr.toString());
         }else if(((CIdExpression)funcNameExpr).getDeclaration() instanceof CParameterDeclaration){
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params, null);
+//            printf("ParameterDeclaration:"+funcNameExpr.toString());
         }else {
             functionCallExpression = new CFunctionCallExpression(fileLocation,
                     type, funcNameExpr, params,

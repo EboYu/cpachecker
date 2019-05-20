@@ -22,6 +22,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.util.Pair;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -44,12 +45,15 @@ import static org.nulist.plugin.model.action.ITTIAbstract.*;
  * @Date 2/27/19 4:18 PM
  * @Version 1.0
  **/
-public class CFABuilder {
+public class CFABuilder implements Serializable {
+
+    public static final long serialVersionUID = 4040269724332602192L;
     public final LogManager logger;
     public final MachineModel machineModel;
 
     public final CFGTypeConverter typeConverter;
     public String projectName ="";
+    public String projectPrefix="";
 
     public final List<Path> parsedFiles = new ArrayList<>();
 
@@ -67,6 +71,12 @@ public class CFABuilder {
         logger = pLogger;
         machineModel = pMachineModel;
         this.projectName = projectName;
+        if(projectName.equals(UE))
+            projectPrefix = "UE_";
+        else if(projectName.equals(ENB))
+            projectPrefix = "ENB_";
+        else if(projectName.equals(MME))
+            projectPrefix = "MME_";
 
         typeConverter = new CFGTypeConverter(logger);
 
@@ -76,7 +86,8 @@ public class CFABuilder {
         systemFunctions = new TreeMap<>();
         cfaNodes = TreeMultimap.create();
         globalVariableDeclarations = new ArrayList<>();
-        expressionHandler = new CFGHandleExpression(logger,"",typeConverter);
+        expressionHandler = new CFGHandleExpression(logger,"",projectName,typeConverter);
+
     }
 
 
@@ -103,8 +114,6 @@ public class CFABuilder {
     public void basicBuild(compunit cu, String projectName)throws result{
 
         String pFileName = cu.normalized_name();
-        if(pFileName.contains("channel_message"))
-         System.out.println(cu.name());
         // Iterate over all procedures in the compilation unit
         // procedure = function
 
@@ -120,20 +129,21 @@ public class CFABuilder {
     }
 
     public void buildGlobalDeclaration(procedure proc, String pFileName, boolean userFile)throws result{
-        if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())||
-                proc.get_kind().equals(procedure_kind.getLIBRARY())){
+        if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())){//
             String funcName = proc.name();
             if((funcName.equals("main") && !isProjectMainFunction(pFileName,projectName)) ||
                     funcName.equals("cmpint") ||
                     funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
                     funcName.startsWith("dump_") ||
                     funcName.startsWith("memb_") ||
+                    funcName.contains("_constraint")||
                     functionDeclarations.containsKey(funcName)) //oai has inline functions and asn generated codes have several same functions
                 return;
 
             //System.out.println(funcName);
+            funcName=projectPrefix+funcName;
             CFGFunctionBuilder cfgFunctionBuilder =
-                    new CFGFunctionBuilder(logger, typeConverter, proc,funcName, pFileName, this);
+                    new CFGFunctionBuilder(logger, typeConverter, proc,funcName,proc.name(), pFileName, this);
             // add function declaration
             CFunctionDeclaration functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
 
@@ -142,11 +152,24 @@ public class CFABuilder {
             // handle the function definition
             CFunctionEntryNode en = cfgFunctionBuilder.handleFunctionDefinition();
 
-            if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())){
-                functions.put(funcName, en);
-                cfgFunctionBuilderMap.put(funcName,cfgFunctionBuilder);
-            }else
-                systemFunctions.put(funcName, en);
+            functions.put(funcName, en);
+            cfgFunctionBuilderMap.put(funcName,cfgFunctionBuilder);
+//            if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())){
+//
+//            }else
+//                systemFunctions.put(funcName, en);
+
+        }else if(proc.get_kind().equals(procedure_kind.getLIBRARY())){
+            String funcName = proc.name();
+
+            CFGFunctionBuilder cfgFunctionBuilder =
+                    new CFGFunctionBuilder(logger, typeConverter, proc,funcName,proc.name(), pFileName, this);
+            // add function declaration
+            CFunctionDeclaration functionDeclaration = cfgFunctionBuilder.handleFunctionDeclaration();
+
+            //functionDeclarations.put(funcName, functionDeclaration);
+
+            expressionHandler.globalDeclarations.put(funcName.hashCode(), functionDeclaration);
 
         }else if(userFile && proc.get_kind().equals(procedure_kind.getFILE_INITIALIZATION())
                 && proc.name().contains("Global_Initialization")){
@@ -169,31 +192,43 @@ public class CFABuilder {
                 if(funcName.equals("cmpint") ||
                         funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
                         funcName.equals("rrc_control_socket_init") ||
+                        funcName.contains("ASN_DEBUG")||
+                        funcName.contains("_ASN_STACK_OVERFLOW_CHECK")||
                         funcName.startsWith("dump_") || funcName.startsWith("memb_")|| funcName.equals("init_UE_stub_single_thread")){
 
                 }else if(!functionFilter(cu.name(),funcName)){
+                    funcName = projectPrefix+funcName;
                     System.out.println(funcName);
                     CFGFunctionBuilder cfgFunctionBuilder = cfgFunctionBuilderMap.get(funcName);
-//                    if(funcName.equals("rrc_ue_task_abstract"))
-//                        System.out.println();
                     if(!cfgFunctionBuilder.isFinished){
-                        cfgFunctionBuilder.visitFunction(!finishFunctionBuild(cu.name(),funcName));
+                        boolean nofinish = notfinishFunctionBuild(cu.name(),funcName.replace(projectPrefix,""));
+                        cfgFunctionBuilder.visitFunction(!nofinish);
                     }
                 }
             }
         }
     }
 
-    private boolean finishFunctionBuild(String fileaname, String functionName){
+    private boolean notfinishFunctionBuild(String fileaname, String functionName){
         if(projectName.equals(UE)){
-            return  fileaname.endsWith("asn1_msg.c") ||
+            return  functionName.equals("fill_ue_capability")||
+                    (fileaname.endsWith("asn1_msg.c")&& functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")) ||
                     functionName.equals("rrc_ue_process_securityModeCommand")||
                     functionName.equals("rrc_ue_process_ueCapabilityEnquiry")||
+                    functionName.equals("rrc_ue_decode_dcch")||
+                    functionName.equals("rrc_ue_decode_ccch")||
+                    functionName.equals("decode_BCCH_DLSCH_Message")||
+                    functionName.equals("decode_PCCH_DLSCH_Message")||
+                    functionName.equals("decode_MCCH_Message")||
                     functionName.equals("nas_message_encode") ||//EMM message
                     functionName.equals("esm_msg_encode") ||//ESM message
                     functionName.equals("nas_message_decode") ||
                     functionName.equals("nas_message_decrypt") ||
-                    functionName.equals("_emm_as_send")||
+                    functionName.equals("_emm_as_send") ||
+                    functionName.equals("_emm_as_encode") ||
+                    functionName.equals("_emm_as_data_ind") ||
+                    functionName.equals("_emm_as_establish_cnf") ||
+                    functionName.equals("_emm_as_recv") ||
                     functionName.equals("uper_encode_to_buffer") ||
                     functionName.equals("uper_decode_complete") ||
                     functionName.equals("uper_decode");
@@ -203,10 +238,16 @@ public class CFABuilder {
                     functionName.equals("nas_message_decode") ||
                     functionName.equals("nas_message_decrypt") ||
                     functionName.equals("_emm_as_send") ||
+                    functionName.equals("_emm_as_encode") ||
+                    functionName.equals("_emm_as_data_ind") ||
+                    functionName.equals("_emm_as_establish_req") ||
+                    functionName.equals("_emm_as_recv") ||
                     functionName.equals("s1ap_generate_downlink_nas_transport");
         }else {//eNB
-            return  fileaname.endsWith("asn1_msg.c") ||
+            return  (fileaname.endsWith("asn1_msg.c") && functionName.startsWith("do_") && !functionName.equals("do_MIB_SL")&& !functionName.contains("Handover")) ||
                     functionName.equals("mac_rrc_data_req") ||
+                    functionName.equals("rrc_eNB_decode_ccch")||
+                    functionName.equals("rrc_eNB_decode_dcch") ||
                     functionName.equals("uper_encode_to_buffer") ||
                     functionName.equals("uper_decode_complete") ||
                     functionName.equals("uper_decode") ||
@@ -215,6 +256,7 @@ public class CFABuilder {
                     functionName.equals("s1ap_eNB_nas_non_delivery_ind");
         }
     }
+
 
     private boolean functionFilter(String filename, String functionName){
         return isITTITaskProcessFunction(functionName)||
@@ -226,6 +268,34 @@ public class CFABuilder {
                 functionName.equals("init_UE_stub")||
                 functionName.equals("UE_thread_synch")||
                 functionName.equals("UE_thread")||
+                (projectName.equals(UE)&& filename.endsWith("asn1_msg.c") &&
+                        (functionName.equals("do_MIB")||
+                                functionName.equals("do_MIB_SL")||
+                                functionName.equals("do_SIB1")||
+                                functionName.equals("do_SIB23")||
+                                functionName.equals("do_RRCConnectionSetup")||
+                                functionName.equals("do_RRCConnectionSetup_BR")||
+                                functionName.equals("do_RRCConnectionReconfiguration_BR")||
+                                functionName.equals("do_RRCConnectionReconfiguration")||
+                                functionName.equals("do_RRCConnectionReestablishment")||
+                                functionName.equals("do_RRCConnectionReestablishmentReject")||
+                                functionName.equals("do_RRCConnectionReject")||
+                                functionName.equals("do_RRCConnectionRelease")||
+                                functionName.equals("do_MBSFNAreaConfig")||
+                                functionName.equals("do_DLInformationTransfer")||
+                                functionName.equals("do_Paging")||
+                                functionName.equals("do_UECapabilityEnquiry")||
+                                functionName.equals("do_HandoverPreparation")||
+                                functionName.equals("do_HandoverCommand")||
+                                functionName.equals("do_SecurityModeCommand")))||
+                (projectName.equals(ENB)&& filename.endsWith("asn1_msg.c") &&
+                        (functionName.equals("do_RRCConnectionRequest")||
+                                functionName.equals("do_SidelinkUEInformation")||
+                                functionName.equals("do_RRCConnectionSetupComplete")||
+                                functionName.equals("do_RRCConnectionReconfigurationComplete")||
+                                functionName.equals("do_MeasurementReport")||
+                                functionName.equals("fill_ue_capability")||
+                                functionName.equals("do_ULInformationTransfer")))||
                 (filename.contains("build/CMakeFiles") && functionName.endsWith("_constraint"))||
                 (filename.contains("openair2/LAYER2/MAC/main_ue.c") && !(functionName.equals("mac_top_init_ue")||functionName.equals("l2_init_ue")))||
                 (filename.contains("openair2/LAYER2/MAC/main.c") && (functionName.equals("init_slice_info")||functionName.equals("rlc_mac_init_global_param")));//start itti tasks in enb
@@ -240,6 +310,7 @@ public class CFABuilder {
      *@return void
      **/
     private void visitGlobalItem(procedure global_initialization, String projectName) throws result {
+
 
         point_set pointSet = global_initialization.points();
         List<String> variableList = new ArrayList<>();
@@ -267,13 +338,13 @@ public class CFABuilder {
 
                 // Support static and other storage classes
                 CStorageClass storageClass= getStorageClass(un_ast);
-                String normalizedName = variableName;
-
+                String normalizedName = projectPrefix+variableName;
                 if (storageClass == CStorageClass.STATIC) {
                     //file static
                     normalizedName = "static__"+normalizedName;
                     storageClass = CStorageClass.AUTO;
                 }
+
                 if(variableList.contains(normalizedName) && node.get_ast(ast_family.getC_NORMALIZED()).is_a(ast_class.getNC_BLOCKASSIGN())){
                     continue;
                 }
@@ -326,37 +397,6 @@ public class CFABuilder {
 
 
     /**
-     * @Description //set users as a global variable
-     * @Param []
-     * @return void
-     **/
-    public void insertUSERGlobalVar(){
-        String typename = "nas_user_t";
-        String variableName = "users";
-        CType type = typeConverter.typeCache.getOrDefault(typename.hashCode(),null);
-        if(type==null){
-            printWARNING("There is no type of "+typename);
-            return;
-        }
-
-        CPointerType pointerType = new CPointerType(false,false,type);
-
-        CStorageClass storageClass = CStorageClass.AUTO;
-        CSimpleDeclaration newDecl =
-                new CVariableDeclaration(
-                        FileLocation.DUMMY,
-                        true,
-                        storageClass,
-                        pointerType,
-                        variableName,
-                        variableName,
-                        variableName,
-                        null);
-        expressionHandler.globalDeclarations.put(variableName.hashCode(),(ADeclaration) newDecl);
-    }
-
-
-    /**
      * Returns whether the first param is a pointer of the type of the second parameter.<br>
      * Examples:
      *
@@ -377,8 +417,6 @@ public class CFABuilder {
             return false;
         }
     }
-
-
 
 
 }

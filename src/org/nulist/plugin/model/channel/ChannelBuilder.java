@@ -50,6 +50,7 @@ import java.util.*;
 import static org.nulist.plugin.model.ChannelBuildOperation.*;
 import static org.nulist.plugin.model.channel.ChannelConstructer.*;
 import static org.nulist.plugin.parser.CFGParser.*;
+import static org.nulist.plugin.util.ClassTool.printWARNING;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.removeEdgeFromNodes;
 
 /**
@@ -85,16 +86,15 @@ public class ChannelBuilder {
         if(!driverList.isEmpty()){
             buildChannelMessageType();
             //channel related models
-            if(driverList.containsKey("cnside_message_channel")){
-                this.project=Channel;
-
-                parseBuildFile("cnside_message_channel",driverList.get("cnside_message_channel"));
-                System.out.println("Parse "+ "cnside_message_channel");
-            }
             if(driverList.containsKey("ueside_message_channel")){
-                this.project=Channel;
+                this.project=UE;
                 parseBuildFile("ueside_message_channel",driverList.get("ueside_message_channel"));
                 System.out.println("Parse "+ "ueside_message_channel");
+            }
+            if(driverList.containsKey("cnside_message_channel")){
+                this.project=Channel;
+                parseBuildFile("cnside_message_channel",driverList.get("cnside_message_channel"));
+                System.out.println("Parse "+ "cnside_message_channel");
             }
 
             if(driverList.containsKey("EMMMessageTranslation")){
@@ -130,55 +130,29 @@ public class ChannelBuilder {
                 parseBuildFile("itti_task_abstract",driverList.get("itti_task_abstract"));
                 System.out.println("Parse "+ "itti_task_abstract");
             }
+            useSingeFilelocation = true;
             if(driverList.containsKey("s1ap_enb_message_deliver")){
                 this.project=MME;
-                useSingeFilelocation = true;
                 parseInsert2Function("s1ap_enb_message_deliver",driverList.get("s1ap_enb_message_deliver"));
                 System.out.println("Parse "+ "s1ap_enb_message_deliver");
             }
             if(driverList.containsKey("s1ap_mme_message_deliver")){
                 this.project=ENB;
-                useSingeFilelocation = true;
                 parseInsert2Function("s1ap_mme_message_deliver",driverList.get("s1ap_mme_message_deliver"));
                 System.out.println("Parse "+ "s1ap_mme_message_deliver");
             }
-            useSingeFilelocation = false;
+            if(driverList.containsKey("rrc_message_deliver")){
+                parseInsert2Function("rrc_message_deliver",driverList.get("rrc_message_deliver"));
+                System.out.println("Parse "+ "rrc_message_deliver");
+            }
+            if(driverList.containsKey("nas_message_deliver")){
+                parseInsert2Function("nas_message_deliver",driverList.get("nas_message_deliver"));
+                System.out.println("Parse "+ "nas_message_deliver");
+            }
 
-            if(builderMap.get(UE).expressionHandler.globalDeclarations.containsKey("uper_encode_to_buffer".hashCode())){
-                boolean builer = builderMap.get(UE).cfgFunctionBuilderMap.containsKey("uper_encode_to_buffer");
-                boolean builer1 = builderMap.get(UE).functionDeclarations.containsKey("uper_encode_to_buffer");
-                System.out.println("Has uper_encode_to_buffer in UE "+builer+" "+ builer1);
-                CFunctionDeclaration functionDeclaration = (CFunctionDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get("uper_encode_to_buffer".hashCode());
-                for(CParameterDeclaration parameterDeclaration:functionDeclaration.getParameters()){
-                    System.out.println(parameterDeclaration.getType().toString()+" "+parameterDeclaration.getName());
-                }
-            }
-            if(builderMap.get(UE).expressionHandler.globalDeclarations.containsKey("uper_encode_to_new_buffer".hashCode())){
-                boolean builer = builderMap.get(UE).cfgFunctionBuilderMap.containsKey("uper_encode_to_new_buffer");
-                boolean builer1 = builderMap.get(UE).functionDeclarations.containsKey("uper_encode_to_new_buffer");
-                System.out.println("Has uper_encode_to_new_buffer in UE "+builer+" "+ builer1);
-                CFunctionDeclaration functionDeclaration = (CFunctionDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get("uper_encode_to_new_buffer".hashCode());
-                for(CParameterDeclaration parameterDeclaration:functionDeclaration.getParameters()){
-                    System.out.println(parameterDeclaration.getType().toString()+" "+parameterDeclaration.getName());
-                }
-            }
-            if(builderMap.get(ENB).expressionHandler.globalDeclarations.containsKey("uper_encode_to_buffer".hashCode())){
-                boolean builer = builderMap.get(ENB).cfgFunctionBuilderMap.containsKey("uper_encode_to_buffer");
-                boolean builer1 = builderMap.get(ENB).functionDeclarations.containsKey("uper_encode_to_buffer");
-                System.out.println("Has uper_encode_to_buffer in ENB "+builer+" "+ builer1);
-                CFunctionDeclaration functionDeclaration = (CFunctionDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get("uper_encode_to_buffer".hashCode());
-                for(CParameterDeclaration parameterDeclaration:functionDeclaration.getParameters()){
-                    System.out.println(parameterDeclaration.getType().toString()+" "+parameterDeclaration.getName());
-                }
-            }
-            if(builderMap.get(ENB).expressionHandler.globalDeclarations.containsKey("uper_encode_to_new_buffer".hashCode())){
-                boolean builer = builderMap.get(ENB).cfgFunctionBuilderMap.containsKey("uper_encode_to_new_buffer");
-                boolean builer1 = builderMap.get(ENB).functionDeclarations.containsKey("uper_encode_to_new_buffer");
-                System.out.println("Has uper_encode_to_new_buffer in ENB "+builer+" "+ builer1);
-                CFunctionDeclaration functionDeclaration = (CFunctionDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get("uper_encode_to_new_buffer".hashCode());
-                for(CParameterDeclaration parameterDeclaration:functionDeclaration.getParameters()){
-                    System.out.println(parameterDeclaration.getType().toString()+" "+parameterDeclaration.getName());
-                }
+            if(driverList.containsKey("scheduler")){
+                parseBuildFile("scheduler",driverList.get("scheduler"));
+                System.out.println("Parse "+ "scheduler");
             }
         }
     }
@@ -191,24 +165,240 @@ public class ChannelBuilder {
 
         globalNodes.forEach(((integer, astNodes) -> {
             AstNode astNode = astNodes.get(1);
-            if(astNode.getEscapedCodeStr().equals("s1ap_eNB_handle_nas_first_req")){
-                CFGFunctionBuilder functionBuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get("s1ap_eNB_handle_nas_first_req");
-                insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
-            }else if(astNode.getEscapedCodeStr().equals("s1ap_eNB_nas_uplink")){
-                CFGFunctionBuilder functionBuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get("s1ap_eNB_nas_uplink");
-                insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
-            }else if(astNode.getEscapedCodeStr().equals("s1ap_eNB_nas_non_delivery_ind")){
-                CFGFunctionBuilder functionBuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get("s1ap_eNB_nas_non_delivery_ind");
-                insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
-            }else if(astNode.getEscapedCodeStr().equals("s1ap_generate_downlink_nas_transport")){
-                CFGFunctionBuilder functionBuilder = builderMap.get(MME).cfgFunctionBuilderMap.get("s1ap_generate_downlink_nas_transport");
-                insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
+            switch (astNode.getEscapedCodeStr()){
+                case "ENB_s1ap_eNB_handle_nas_first_req":
+                case "ENB_s1ap_eNB_nas_uplink":
+                case "ENB_s1ap_eNB_nas_non_delivery_ind":
+                    CFGFunctionBuilder slapENBfunctionBuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocation((CompoundStatement)astNodes.get(astNodes.size()-1),slapENBfunctionBuilder);
+                    break;
+                case "MME_s1ap_generate_downlink_nas_transport":{
+                    CFGFunctionBuilder functionBuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocation((CompoundStatement)astNodes.get(astNodes.size()-1),functionBuilder);
+                }break;
+
+                //push rrc message into cache
+                case "ENB_do_MIB":
+                case "ENB_do_SIB1":
+                case "ENB_do_SIB23":
+                case "ENB_do_RRCConnectionSetup":
+                case "ENB_do_RRCConnectionSetup_BR":
+                case "ENB_do_RRCConnectionReconfiguration_BR":
+                case "ENB_do_RRCConnectionReconfiguration":
+                case "ENB_do_RRCConnectionReestablishment":
+                case "ENB_do_RRCConnectionReestablishmentReject":
+                case "ENB_do_RRCConnectionReject":
+                case "ENB_do_RRCConnectionRelease":
+                case "ENB_do_MBSFNAreaConfig":
+                case "ENB_do_Paging":
+                case "ENB_do_UECapabilityEnquiry":
+                case "ENB_do_SecurityModeCommand":{
+                    this.project = ENB;
+                    CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "ENB_uper_encode_to_buffer");
+                }break;
+                case "ENB_do_DLInformationTransfer":{
+                    this.project = ENB;
+                    CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder, "ENB_uper_encode_to_new_buffer");
+                }break;
+
+                case "UE_do_RRCConnectionRequest":
+                case "UE_do_SidelinkUEInformation":
+                case "UE_do_RRCConnectionSetupComplete":
+                case "UE_do_RRCConnectionReconfigurationComplete":
+                case "UE_do_MeasurementReport":
+                case "UE_fill_ue_capability":
+                case "UE_rrc_ue_process_ueCapabilityEnquiry":
+                case "UE_rrc_ue_process_securityModeCommand":{
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_encode_to_buffer");
+                }break;
+                case "UE_do_ULInformationTransfer":{
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_encode_to_new_buffer");
+                }break;
+
+                //pull rrc message from cache
+                case "ENB_rrc_eNB_decode_ccch":{
+                    this.project = ENB;
+                    CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"ENB_uper_decode");
+                }break;
+                case "ENB_rrc_eNB_decode_dcch":{
+                    this.project = ENB;
+                    CFGFunctionBuilder enbFunctionbuilder = builderMap.get(ENB).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),enbFunctionbuilder,"ENB_uper_decode");
+                }break;
+
+
+                case "UE_rrc_ue_decode_dcch"://uper_decode
+                case "UE_rrc_ue_decode_ccch"://uper_decode
+                {
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_decode");
+                }break;
+                case "UE_decode_BCCH_DLSCH_Message"://uper_decode_complete
+                case "UE_decode_PCCH_DLSCH_Message"://uper_decode_complete
+                case "UE_decode_MCCH_Message"://uper_decode_complete
+                {
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_uper_decode_complete");
+                }break;
+
+                case "UE__emm_as_send":{
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2FunctionAssume((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder);
+                }
+                    break;
+                case "UE__emm_as_encode":{
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_nas_message_encode");
+                }break;
+                case "UE__emm_as_data_ind":{
+                    this.project = UE;
+                    CFGFunctionBuilder ueFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),ueFunctionbuilder,"UE_nas_message_decrypt");
+                }break;
+
+                //nas_message_decode
+                case "UE__emm_as_establish_cnf":
+                case "UE__emm_as_recv":{
+                    this.project = UE;
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(UE).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"UE_nas_message_decode");
+                }break;
+
+                case "MME__emm_as_send":{
+                    this.project = MME;
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2FunctionAssume((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder);
+                }break;
+
+                case "MME__emm_as_encode":{
+                    this.project = MME;
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    insert2Function((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_encode");
+                }break;
+                case "MME__emm_as_data_ind": {
+                    this.project = MME;
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_decrypt");
+                }break;
+                //nas_message_decode
+                case "MME__emm_as_establish_req":
+                case "MME__emm_as_recv":{
+                    this.project = MME;
+                    CFGFunctionBuilder mmeFunctionbuilder = builderMap.get(MME).cfgFunctionBuilderMap.get(astNode.getEscapedCodeStr());
+                    replaceFunctionInvocationWithReturn((CompoundStatement)astNodes.get(astNodes.size()-1),mmeFunctionbuilder,"MME_nas_message_decode");
+                }break;
+                default:
+                    printWARNING("No such function: "+astNode.getEscapedCodeStr());break;
             }
         }));
     }
 
-    public void insert2Function(CompoundStatement astNode, CFGFunctionBuilder functionBuilder){
-        CFAEdge targetEdge = findIttiSendSctpDataReq(functionBuilder);
+    public void insert2FunctionAssume(CompoundStatement astNode, CFGFunctionBuilder functionBuilder){
+        CAssumeEdge targetEdge = findAssuemEdge(functionBuilder);
+        this.fileLocation = targetEdge.getFileLocation();
+
+        CFANode newNode = functionBuilder.newCFANode();
+
+        CFANode prevNode = targetEdge.getPredecessor();
+        CFANode nextNode = targetEdge.getSuccessor();
+        removeEdgeFromNodes(targetEdge);
+        CAssumeEdge originalAssumeEdge = new CAssumeEdge(targetEdge.getRawStatement(),
+                fileLocation,
+                prevNode,newNode,targetEdge.getExpression(),targetEdge.getTruthAssumption());
+        functionBuilder.addToCFA(originalAssumeEdge);
+
+        expressionStatement(functionBuilder, (ExpressionStatement)astNode.getStatement(0),newNode,nextNode);
+        functionBuilder.finish();
+    }
+
+    public void insert2Function(CompoundStatement astNode, CFGFunctionBuilder functionBuilder, String functionName){
+        CStatementEdge targetEdge = findFunctionCallEdge(functionBuilder, functionName).get(0);
+        this.fileLocation = targetEdge.getFileLocation();
+        CFANode newNode = functionBuilder.newCFANode();
+
+        CFANode prevNode = targetEdge.getPredecessor();
+        CFANode nextNode = targetEdge.getSuccessor();
+        removeEdgeFromNodes(targetEdge);
+
+        expressionStatement(functionBuilder, (ExpressionStatement)astNode.getStatement(0),prevNode,newNode);
+
+        CStatementEdge originalEdge = new CStatementEdge(targetEdge.getRawStatement(),targetEdge.getStatement(),fileLocation,
+                newNode,nextNode);
+        functionBuilder.addToCFA(originalEdge);
+        functionBuilder.finish();
+    }
+
+    public void replaceFunctionInvocationWithReturn(CompoundStatement astNode, CFGFunctionBuilder functionBuilder, String functionName){
+        if(!functionBuilder.functionName.equals("ENB_rrc_eNB_decode_dcch")){
+            CStatementEdge targetEdge = findFunctionCallEdge(functionBuilder, functionName).get(0);
+            this.fileLocation = targetEdge.getFileLocation();
+            CFANode prevNode = targetEdge.getPredecessor();
+            CFANode nextNode = targetEdge.getSuccessor();
+            removeEdgeFromNodes(targetEdge);
+
+            if(targetEdge.getStatement() instanceof CFunctionCallStatement){
+                treeVisitor(functionBuilder,astNode,prevNode,nextNode);
+            }else if(targetEdge.getStatement() instanceof CFunctionCallAssignmentStatement){
+                if(targetEdge.getPredecessor().getEnteringEdge(0) instanceof CDeclarationEdge){
+                    CDeclarationEdge declarationEdge = (CDeclarationEdge)targetEdge.getPredecessor().getEnteringEdge(0);
+                    CVariableDeclaration variableDeclaration = (CVariableDeclaration)declarationEdge.getDeclaration();
+                    if(variableDeclaration.getType().getCanonicalType() instanceof CSimpleType){
+                        CInitializer initializer = new CInitializerExpression(fileLocation, CIntegerLiteralExpression.ZERO);
+                        variableDeclaration.addInitializer(initializer);
+                    }else {
+                        List<CInitializer> cExpressionList = new ArrayList<>();
+                        cExpressionList.add(new CInitializerExpression(fileLocation,CIntegerLiteralExpression.ZERO));
+                        cExpressionList.add(new CInitializerExpression(fileLocation,new CIntegerLiteralExpression(fileLocation,CNumericTypes.INT,BigInteger.valueOf(100))));
+                        CInitializer initializer = new CInitializerList(fileLocation, cExpressionList);
+                        variableDeclaration.addInitializer(initializer);
+                    }
+                    expressionStatement(functionBuilder,(ExpressionStatement) astNode.getStatement(0),prevNode,nextNode);
+                }else {
+                    throw new RuntimeException("This is not that edge: "+targetEdge.getPredecessor().getEnteringEdge(0).toString()+"-->"+targetEdge.toString());
+                }
+            }
+            functionBuilder.finish();
+        }else {
+            List<CStatementEdge> edgeList = findFunctionCallEdge(functionBuilder, functionName);
+            for(int i=0;i<2;i++){
+                CStatementEdge targetEdge = edgeList.get(i);
+                this.fileLocation = targetEdge.getFileLocation();
+                CFANode prevNode = targetEdge.getPredecessor();
+                CFANode nextNode = targetEdge.getSuccessor();
+                removeEdgeFromNodes(targetEdge);
+                if(targetEdge.getPredecessor().getEnteringEdge(0) instanceof CDeclarationEdge){
+                    CDeclarationEdge declarationEdge = (CDeclarationEdge)targetEdge.getPredecessor().getEnteringEdge(0);
+                    CVariableDeclaration variableDeclaration = (CVariableDeclaration)declarationEdge.getDeclaration();
+                    List<CInitializer> cExpressionList = new ArrayList<>();
+                    cExpressionList.add(new CInitializerExpression(fileLocation,CIntegerLiteralExpression.ZERO));
+                    cExpressionList.add(new CInitializerExpression(fileLocation,new CIntegerLiteralExpression(fileLocation,CNumericTypes.INT,BigInteger.valueOf(100))));
+                    CInitializer initializer = new CInitializerList(fileLocation, cExpressionList);
+                    variableDeclaration.addInitializer(initializer);
+                    expressionStatement(functionBuilder,(ExpressionStatement) astNode.getStatement(i),prevNode,nextNode);
+                }else {
+                    throw new RuntimeException("This is not that edge: "+targetEdge.getPredecessor().getEnteringEdge(0).toString()+"-->"+targetEdge.toString());
+                }
+            }
+            functionBuilder.finish();
+        }
+
+    }
+
+    public void replaceFunctionInvocation(CompoundStatement astNode, CFGFunctionBuilder functionBuilder){
+        String name = functionBuilder.cfaBuilder.projectName.equals(ENB)?"ENB_s1ap_eNB_itti_send_sctp_data_req":"MME_s1ap_mme_itti_send_sctp_request";
+
+        CFAEdge targetEdge = findFunctionCallEdge(functionBuilder, name).get(0);
         this.fileLocation = targetEdge.getFileLocation();
         CFANode prevNode = targetEdge.getPredecessor();
         CFANode nextNode = targetEdge.getSuccessor();
@@ -217,34 +407,50 @@ public class ChannelBuilder {
         functionBuilder.finish();
     }
 
-    private CFAEdge findIttiSendSctpDataReq(CFGFunctionBuilder functionBuilder){
-        String name = functionBuilder.cfaBuilder.projectName.equals(ENB)?"s1ap_eNB_itti_send_sctp_data_req":"s1ap_mme_itti_send_sctp_request";
-
-        CFAEdge edge = backTraceEdge(functionBuilder.cfa.getExitNode(),name);
-        if(edge==null)
-            throw new RuntimeException("No such function: "+name+" is called in that location "+functionBuilder.functionName);
-        return edge;
-    }
-
-    private CFAEdge backTraceEdge(FunctionExitNode node, String targetFunctionName){
-        if(node.getNumEnteringEdges()!=0){
+    private CAssumeEdge findAssuemEdge(CFGFunctionBuilder functionBuilder){
+        for(CFANode node:functionBuilder.cfaNodes){
             for(int i=0;i<node.getNumEnteringEdges();i++){
                 CFAEdge edge = node.getEnteringEdge(i);
-                if(edge instanceof CReturnStatementEdge && ((CReturnStatementEdge) edge).getExpression().get() instanceof CIntegerLiteralExpression){
-                    int returnValue = ((CIntegerLiteralExpression) ((CReturnStatementEdge) edge).getExpression().get()).getValue().intValue();
-                    if(returnValue==0){
-                        CFANode node1 = edge.getPredecessor();
-                        CFAEdge edge1 = node1.getEnteringEdge(0);
-                        if(edge1 instanceof CStatementEdge && ((CStatementEdge) edge1).getStatement() instanceof CFunctionCallStatement){
-                            if(((CFunctionCallStatement) ((CStatementEdge) edge1).getStatement()).
-                                    getFunctionCallExpression().getDeclaration().getName().equals(targetFunctionName))
-                                return edge1;
-                        }
+                if(edge instanceof CAssumeEdge && ((CAssumeEdge) edge).getTruthAssumption()){
+                    CExpression expression = ((CAssumeEdge) edge).getExpression();
+                    if(expression instanceof CBinaryExpression){
+                        if(((CBinaryExpression) expression).getOperator().equals(CBinaryExpression.BinaryOperator.GREATER_THAN) &&
+                            ((CBinaryExpression) expression).getOperand2().equals(CIntegerLiteralExpression.ZERO))
+                            return (CAssumeEdge) edge;
+                    }
+                }
+
+            }
+        }
+        throw new RuntimeException("No such assume edge: nas_msg.id >0 is performed in that location "+functionBuilder.functionName);
+    }
+
+    private List<CStatementEdge> findFunctionCallEdge(CFGFunctionBuilder functionBuilder, String functionName){
+        List<CStatementEdge> edgeList = new ArrayList<>();
+        if(functionBuilder.cfaNodes==null || functionBuilder.cfaNodes.isEmpty())
+            throw new RuntimeException("This function: " + functionBuilder.functionName+" has finished in project :" +project);
+        for(CFANode node:functionBuilder.cfaNodes){
+            for(int i=0;i<node.getNumEnteringEdges();i++){
+                CFAEdge edge = node.getEnteringEdge(i);
+                if(edge instanceof CStatementEdge && ((CStatementEdge) edge).getStatement() instanceof CFunctionCall){
+
+                    if(((CFunctionCall) ((CStatementEdge) edge).getStatement()).
+                            getFunctionCallExpression().getDeclaration()==null)
+                        continue;
+                    if(((CFunctionCall) ((CStatementEdge) edge).getStatement()).
+                            getFunctionCallExpression().
+                            getDeclaration().
+                            getName().equals(functionName)){
+                        edgeList.add((CStatementEdge)edge);
+                        if(!functionBuilder.functionName.equals("ENB_rrc_eNB_decode_dcch"))
+                            return edgeList;
+                        else if(edgeList.size()==2)
+                            return edgeList;
                     }
                 }
             }
         }
-        return null;
+        throw new RuntimeException("No such function: "+functionName+" is called in that location "+functionBuilder.functionName);
     }
 
     public void parseBuildFile(String filename, AntlrCFunctionParserDriver driver){
@@ -261,7 +467,6 @@ public class ChannelBuilder {
                     IdentifierDecl decl = (IdentifierDecl) ((IdentifierDeclStatement) astNode).getIdentifierDeclList().get(i);
                     CDeclaration declaration = parseVariableDeclaration(null, true, decl);
                     channelBuilder.expressionHandler.globalDeclarations.put(declaration.getName().hashCode(),declaration);
-
                 }
             }else if(astNode instanceof CompoundStatement){
                 functionDeclaration(astNodes);
@@ -352,6 +557,11 @@ public class ChannelBuilder {
                 new CCompositeType.CCompositeTypeMemberDeclaration(LTE_PCCH_Message_t, "pcch_msg");
         members.add(memberDeclaration7);
 
+        CType LTE_MCCH_Message_t = builder.typeConverter.typeCache.get("LTE_MCCH_Message_t".hashCode());
+        CCompositeType.CCompositeTypeMemberDeclaration memberDeclaration8 =
+                new CCompositeType.CCompositeTypeMemberDeclaration(LTE_MCCH_Message_t, "mcch_msg");
+        members.add(memberDeclaration8);
+
         CCompositeType cCompositeType = new CCompositeType(false, false,
                 CComplexType.ComplexTypeKind.UNION,
                 members, union, union);
@@ -432,6 +642,7 @@ public class ChannelBuilder {
         CFGFunctionBuilder functionBuilder = new CFGFunctionBuilder(channelBuilder.logger,
                 channelBuilder.typeConverter, null,
                 functionName,
+                functionName,
                 filename,
                 channelBuilder);
         functionBuilder.setDirectAddEdge(true);
@@ -477,6 +688,8 @@ public class ChannelBuilder {
                 paramTypes.add(type);
 
                 CParameterDeclaration parameterDeclaration = new CParameterDeclaration(fileLocation,type,param);
+                parameterDeclaration.setQualifiedName(param);
+                functionBuilder.expressionHandler.variableDeclarations.put(param.hashCode(),parameterDeclaration);
                 parameterDeclarations.add(parameterDeclaration);
             }
         }
@@ -694,12 +907,13 @@ public class ChannelBuilder {
                     CNumericTypes.BOOL);
         }else if(expressionNode instanceof UnaryOperationExpression){
             CExpression operand1 = (CExpression)getExpression(functionBuilder,(Expression)expressionNode.getChild(1));
+            Expression operator = (Expression) expressionNode.getChild(0);
             CType type = operand1.getExpressionType();
-            if(expressionNode.getChild(0).getEscapedCodeStr().equals("*")){
+            if(operator.getEscapedCodeStr().equals("*")){
                 return new CPointerExpression(fileLocation, type, operand1);
             }
 
-            CUnaryExpression.UnaryOperator unaryOperator = getUnaryOperator(expressionNode.getChild(0).getEscapedCodeStr());
+            CUnaryExpression.UnaryOperator unaryOperator = getUnaryOperator(operator.getEscapedCodeStr());
             if(unaryOperator.equals(CUnaryExpression.UnaryOperator.AMPER))
                 type = new CPointerType(false,false,type);
             else if(unaryOperator.equals(CUnaryExpression.UnaryOperator.SIZEOF))
@@ -823,12 +1037,24 @@ public class ChannelBuilder {
 
     private CFunctionDeclaration getFunctionDelcaration(String functionName){
         CFunctionDeclaration functionDeclaration;
-        if(functionName.startsWith("UE_"))
-            functionDeclaration= builderMap.get(UE).functionDeclarations.get(functionName.replace("UE_",""));
-        else if(functionName.startsWith("ENB_"))
-            functionDeclaration= builderMap.get(ENB).functionDeclarations.get(functionName.replace("ENB_",""));
-        else if(functionName.startsWith("MME_"))
-            functionDeclaration= builderMap.get(MME).functionDeclarations.get(functionName.replace("MME_",""));
+        if(functionName.startsWith("UE_")){
+            functionDeclaration= builderMap.get(UE).functionDeclarations.get(functionName);
+            if(functionDeclaration==null)
+                functionDeclaration= (CFunctionDeclaration) builderMap.get(UE).
+                        expressionHandler.globalDeclarations.get(functionName.replace("UE_","").hashCode());
+        }
+        else if(functionName.startsWith("ENB_")){
+            functionDeclaration= builderMap.get(ENB).functionDeclarations.get(functionName);
+            if(functionDeclaration==null)
+                functionDeclaration= (CFunctionDeclaration) builderMap.get(ENB).
+                        expressionHandler.globalDeclarations.get(functionName.replace("ENB_","").hashCode());
+        }
+        else if(functionName.startsWith("MME_")) {
+            functionDeclaration = builderMap.get(MME).functionDeclarations.get(functionName);
+            if(functionDeclaration==null)
+                functionDeclaration= (CFunctionDeclaration) builderMap.get(MME).
+                        expressionHandler.globalDeclarations.get(functionName.replace("MME_","").hashCode());
+        }
         else
             functionDeclaration= channelBuilder.functionDeclarations.get(functionName);
         if(functionDeclaration==null)
@@ -840,7 +1066,7 @@ public class ChannelBuilder {
     //locationType= 0:internal variable, 1:global variable in channel, 2 global variable in UE, 3 global variable in eNB, 4 global variable in MME
     private CSimpleDeclaration getVariableDeclaration(CFGFunctionBuilder functionBuilder, String variableName){
         CSimpleDeclaration variableDel = null;
-        if(filename.startsWith("s1ap")){
+        if(filename.startsWith("s1ap")||filename.startsWith("rrc_message_deliver")||filename.startsWith("nas_message_deliver")){
             for(CSimpleDeclaration simpleDeclaration: functionBuilder.expressionHandler.variableDeclarations.values()){
                 if(simpleDeclaration.getOrigName().equals(variableName))
                     return simpleDeclaration;
@@ -855,24 +1081,24 @@ public class ChannelBuilder {
         if(variableDel==null){
             switch (project){
                 case UE:
-                    variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(("UE_"+variableName).hashCode());
                     break;
                 case ENB:
-                    variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(("ENB_"+variableName).hashCode());
                     break;
                 case MME:
-                    variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                    variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(("MME_"+variableName).hashCode());
                     break;
             }
         }
         if(variableDel==null && filename.equals("itti_task_abstract")){
             if(functionBuilder.functionName.contains("ue")) {
-                variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(UE).expressionHandler.globalDeclarations.get(("UE_"+variableName).hashCode());
             }
             else if(functionBuilder.functionName.contains("enb"))
-                variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(ENB).expressionHandler.globalDeclarations.get(("ENB_"+variableName).hashCode());
             else
-                variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(variableName.hashCode());
+                variableDel = (CSimpleDeclaration) builderMap.get(MME).expressionHandler.globalDeclarations.get(("MME_"+variableName).hashCode());
         }
 
         if(variableDel==null)
@@ -1105,8 +1331,6 @@ public class ChannelBuilder {
                 false);
         builder.addToCFA(trueEdge21);
 
-
-
         CAssumeEdge falseEdge21 = new CAssumeEdge(
                 "!("+conditionExpr+")",
                 FileLocation.DUMMY,
@@ -1221,7 +1445,10 @@ public class ChannelBuilder {
         String variableName = node.getName().getEscapedCodeStr();
         CType type;
         if(functionBuilder==null){
-            type = getType(getProjectForType("",0), node.getType().completeType);
+            if(variableName.equals("ue_cap"))
+                type = getType(UE,node.getType().completeType);
+            else
+                type = getType(getProjectForType("",0), node.getType().completeType);
         }else
             type = getType(getProjectForType(functionBuilder.functionName,3), node.getType().completeType);
 

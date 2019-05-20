@@ -16,6 +16,7 @@ import org.sosy_lab.cpachecker.cfa.ast.c.CParameterDeclaration;
 import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,8 @@ import java.util.Deque;
 import static org.nulist.plugin.parser.CFGAST.*;
 import static org.nulist.plugin.parser.CFGParser.*;
 
-public class CFGTypeConverter {
+public class CFGTypeConverter implements Serializable {
+    public static final long serialVersionUID = 8661192132800061238L;
     private final String STRUCT_PREF = "struct __STRUCT__";
     private final String UNION_PREF = "__UNION__";
     private final String ENUM_PREF = "__ENUM__";
@@ -143,6 +145,7 @@ public class CFGTypeConverter {
                             new CEnumType.CEnumerator(FileLocation.DUMMY,
                                                       name,
                                                       name,
+                                                       CNumericTypes.INT,
                                                       value);
                     enumerators.add(enumerator);
                 }
@@ -384,7 +387,8 @@ public class CFGTypeConverter {
             String memberTypeName = memberType.pretty_print();
             if(memberTypeName.endsWith("<UNNAMED>") || memberTypeName.endsWith("<unnamed>") ){
                 memberTypeName = handleUnnamedType(memberType);
-                //memberName = memberTypeName.replace(UNION_PREF,"");
+                if(memberName.equals(""))
+                    memberName = memberTypeName.replace(UNION_PREF,"");
             }
 
             if(typeMap.containsKey(memberTypeName)){

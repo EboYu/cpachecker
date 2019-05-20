@@ -310,6 +310,7 @@ public class ChannelConstructer {
                 channelBuilder.typeConverter,
                 null,
                 functionName,
+                functionName,
                 "",
                 channelBuilder);
 
@@ -395,6 +396,7 @@ public class ChannelConstructer {
                 channelBuilder.logger,
                 channelBuilder.typeConverter,
                 null,
+                functionName,
                 functionName,
                 "",
                 channelBuilder);
@@ -488,6 +490,7 @@ public class ChannelConstructer {
                 channelBuilder.logger,
                 channelBuilder.typeConverter,
                 null,
+                functionName,
                 functionName,
                 "",
                 channelBuilder);

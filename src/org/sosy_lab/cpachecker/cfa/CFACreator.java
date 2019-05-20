@@ -204,7 +204,7 @@ public class CFACreator {
     name = "cfa.serialize",
     description = "export CFA as .ser file (dump Java objects)"
   )
-  private boolean serializeCfa = false;
+  private boolean serializeCfa = true;
 
   @Option(
     secure = true,
@@ -290,7 +290,10 @@ public class CFACreator {
       description="This option enables the computation of a classification of CFA nodes.")
 private boolean classifyNodes = false;
 
-  @Option(secure=true, description="C, Java, or LLVM IR?")
+  @Option(secure=true,
+      description="Programming language of the input program. If not given explicitly, "
+          + "auto-detection will occur")
+  // keep option name in sync with {@link CPAMain#language}, value might differ
   private Language language = Language.C;
 
   private final LogManager logger;
@@ -495,6 +498,22 @@ private boolean classifyNodes = false;
     }
   }
 
+  public CFA readSerializedCFA(String cfaFile){
+    try {
+      try (InputStream inputStream = Files.newInputStream(Paths.get(cfaFile));
+           InputStream gzipInputStream = new GZIPInputStream(inputStream);
+           ObjectInputStream ois = new ObjectInputStream(gzipInputStream)) {
+        ImmutableCFA immutableCFA = (ImmutableCFA) ois.readObject();
+        return immutableCFA;
+      }
+    } catch (ClassNotFoundException e){
+      logger.logfUserException(Level.WARNING, e, "Class not found");
+    }catch (IOException e) {
+      logger.logUserException(Level.WARNING, e, "Could not read serialized CFA from file.");
+    }
+    return null;
+  }
+
 
   public CFA createCFA(ParseResult pParseResult, FunctionEntryNode pMainFunction) throws InvalidConfigurationException, InterruptedException, ParserException {
 
@@ -515,7 +534,8 @@ private boolean classifyNodes = false;
 
     // check the CFA of each function
     for (String functionName : cfa.getAllFunctionNames()) {
-      assert CFACheck.check(cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName));
+      assert CFACheck.check(
+          cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName), machineModel);
     }
     stats.checkTime.stop();
 
@@ -527,7 +547,8 @@ private boolean classifyNodes = false;
     // Check CFA again after post-processings
     stats.checkTime.start();
     for (String functionName : cfa.getAllFunctionNames()) {
-      assert CFACheck.check(cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName));
+      assert CFACheck.check(
+          cfa.getFunctionHead(functionName), cfa.getFunctionNodes(functionName), machineModel);
     }
     stats.checkTime.stop();
 
@@ -614,7 +635,7 @@ private boolean classifyNodes = false;
 
     // check the super CFA starting at the main function
     stats.checkTime.start();
-    assert CFACheck.check(mainFunction, null);
+    assert CFACheck.check(mainFunction, null, machineModel);
     stats.checkTime.stop();
 
     if (((exportCfaFile != null) && (exportCfa || exportCfaPerFunction))

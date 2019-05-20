@@ -57,39 +57,104 @@ void DLNASMessageDeliver(MessagesIds messageID){
 void ULNASEMMMessageTranslation(){
     uint8_t msgType = UE_channel_message_cache->nas_message.nas_message.plain.emm.header.message_type;
     translate_UL_Header();
+    uint8_t headerType = UE_channel_message_cache->nas_message.nas_message.header.security_header_type;
     switch(msgType){
         case 65://ATTACH_REQUEST
-            translate_UL_ATTACH_REQUEST();break;
+            if(headerType==720896)
+                translate_UL_ATTACH_REQUEST();
+            else
+                translate_UL_ATTACH_REQUEST_Security();
+            break;
         case 67://ATTACH_COMPLETE
-            translate_UL_ATTACH_COMPLETE();break;
+            if(headerType==720896)
+                translate_UL_ATTACH_COMPLETE();
+            else
+                translate_UL_ATTACH_COMPLETE_Security();
+            break;
         case 69://DETACH_REQUEST, ue-sided detach request
-            translate_UL_DETACH_REQUEST();break;
+            if(headerType==720896)
+                translate_UL_DETACH_REQUEST();
+            else
+                translate_UL_DETACH_REQUEST_Security();
+            break;
         case 70://DETACH_ACCEPT, network-sided detach request
-            translate_UL_DETACH_ACCEPT();break;
+            if(headerType==720896)
+                translate_UL_DETACH_ACCEPT();
+            else
+                translate_UL_DETACH_ACCEPT_Security();
+            break;
         case 72://TRACKING_AREA_UPDATE_REQUEST
-            translate_UL_TRACKING_AREA_UPDATE_REQUEST();break;
+            if(headerType==720896)
+                translate_UL_TRACKING_AREA_UPDATE_REQUEST();
+            else
+                translate_UL_TRACKING_AREA_UPDATE_REQUEST_Security();
+            break;
         case 74://TRACKING_AREA_UPDATE_COMPLETE
-            translate_UL_TRACKING_AREA_UPDATE_COMPLETE();break;
+            if(headerType==720896)
+                translate_UL_TRACKING_AREA_UPDATE_COMPLETE();
+            else
+                translate_UL_TRACKING_AREA_UPDATE_COMPLETE_Security();
+            break;
         case 76://EXTENDED_SERVICE_REQUEST
-            translate_UL_EXTENDED_SERVICE_REQUEST();break;
+            if(headerType==720896)
+                translate_UL_EXTENDED_SERVICE_REQUEST();
+            else
+                translate_UL_EXTENDED_SERVICE_REQUEST_Security();
+            break;
         case 77://SERVICE_REQUEST
-            translate_UL_SERVICE_REQUEST();break;
+            if(headerType==720896)
+                translate_UL_SERVICE_REQUEST();
+            else
+                translate_UL_SERVICE_REQUEST_Security();
+            break;
         case 81://GUTI_REALLOCATION_COMPLETE
-            translate_UL_GUTI_REALLOCATION_COMPLETE();break;
+            if(headerType==720896)
+                translate_UL_GUTI_REALLOCATION_COMPLETE();
+            else
+                translate_UL_GUTI_REALLOCATION_COMPLETE_Security();
+            break;
         case 83://AUTHENTICATION_RESPONSE
-            translate_UL_AUTHENTICATION_RESPONSE();break;
+            if(headerType==720896)
+                translate_UL_AUTHENTICATION_RESPONSE();
+            else
+                translate_UL_AUTHENTICATION_RESPONSE_Security();
+            break;
         case 92://AUTHENTICATION_FAILURE
-            translate_UL_AUTHENTICATION_FAILURE();break;
+            if(headerType==720896)
+                translate_UL_AUTHENTICATION_FAILURE();
+            else
+                translate_UL_AUTHENTICATION_FAILURE_Security();
+            break;
         case 86://IDENTITY_RESPONSE
-            translate_UL_IDENTITY_RESPONSE();break;
+            if(headerType==720896)
+                translate_UL_IDENTITY_RESPONSE();
+            else
+                translate_UL_IDENTITY_RESPONSE_Security();
+            break;
         case 94://SECURITY_MODE_COMPLETE
-            translate_UL_SECURITY_MODE_COMPLETE();break;
+            if(headerType==720896)
+                translate_UL_SECURITY_MODE_COMPLETE();
+            else
+                translate_UL_SECURITY_MODE_COMPLETE_Security();
+            break;
         case 95://SECURITY_MODE_REJECT
-            translate_UL_SECURITY_MODE_REJECT();break;
+            if(headerType==720896)
+                translate_UL_SECURITY_MODE_REJECT();
+            else
+                translate_UL_SECURITY_MODE_REJECT_Security();
+            break;
         case 96://EMM_STATUS, both
-            translate_UL_EMM_STATUS();break;
+            if(headerType==720896)
+                translate_UL_EMM_STATUS();
+            else
+                translate_UL_EMM_STATUS_Security();
+            break;
         case 99://UPLINK_NAS_TRANSPORT
-            translate_UL_UPLINK_NAS_TRANSPORT();break;
+            if(headerType==720896)
+                translate_UL_UPLINK_NAS_TRANSPORT();
+            else
+                translate_UL_UPLINK_NAS_TRANSPORT_Security();
+            break;
         default:break;
     }
 }
@@ -97,43 +162,104 @@ void ULNASEMMMessageTranslation(){
 void DLNASEMMMessageTranslation(){
     uint8_t msgType = CN_channel_message_cache->nas_message.nas_message.plain.emm.header.message_type;
     translate_DL_Header();
+    uint8_t headerType = CN_channel_message_cache->nas_message.nas_message.header.security_header_type;
     switch(msgType){
         case 66://ATTACH_ACCEPT
-            translate_DL_ATTACH_ACCEPT();
+            if(headerType==720896)
+                translate_DL_ATTACH_ACCEPT();
+            else
+                translate_DL_ATTACH_ACCEPT_Security();
             break;
         case 68://ATTACH_REJECT
-            translate_DL_ATTACH_REJECT();
+            if(headerType==720896)
+                        translate_DL_ATTACH_REJECT();
+                    else
+                        translate_DL_ATTACH_REJECT_Security();
             break;
         case 69://DETACH_REQUEST, network-sided detach request
-            translate_DL_DETACH_REQUEST();
+        if(headerType==720896)
+                        translate_DL_DETACH_REQUEST();
+                    else
+                        translate_DL_DETACH_REQUEST_Security();
             break;
         case 70://DETACH_ACCEPT, ue-sided detach request
-            translate_DL_DETACH_ACCEPT();
+        if(headerType==720896)
+                        translate_DL_DETACH_ACCEPT();
+                    else
+                        translate_DL_DETACH_ACCEPT_Security();
             break;
         case 73://TRACKING_AREA_UPDATE_ACCEPT
-            translate_DL_TRACKING_AREA_UPDATE_ACCEPT();break;
+        if(headerType==720896)
+                        translate_DL_TRACKING_AREA_UPDATE_ACCEPT();
+                    else
+                        translate_DL_TRACKING_AREA_UPDATE_ACCEPT_Security();
+                        break;
         case 75://TRACKING_AREA_UPDATE_REJECT
-            translate_DL_TRACKING_AREA_UPDATE_REJECT();break;
+        if(headerType==720896)
+                        translate_DL_TRACKING_AREA_UPDATE_REJECT();
+                    else
+                        translate_DL_TRACKING_AREA_UPDATE_REJECT_Security();
+            break;
         case 78://SERVICE_REJECT
-            translate_DL_SERVICE_REJECT();break;
+        if(headerType==720896)
+                        translate_DL_SERVICE_REJECT();
+                    else
+                        translate_DL_SERVICE_REJECT_Security();
+            break;
         case 88://GUTI_REALLOCATION_COMMAND
-            translate_DL_GUTI_REALLOCATION_COMMAND();break;
+        if(headerType==720896)
+                        translate_DL_GUTI_REALLOCATION_COMMAND();
+                    else
+                        translate_DL_GUTI_REALLOCATION_COMMAND_Security();
+            break;
         case 82://AUTHENTICATION_REQUEST
-            translate_DL_AUTHENTICATION_REQUEST();break;
+            if(headerType==720896)
+                        translate_DL_AUTHENTICATION_REQUEST();
+                    else
+                        translate_DL_AUTHENTICATION_REQUEST_Security();
+            break;
         case 84://AUTHENTICATION_REJECT
-            translate_DL_AUTHENTICATION_REJECT();break;
+        if(headerType==720896)
+                        translate_DL_AUTHENTICATION_REJECT();
+                    else
+                        translate_DL_AUTHENTICATION_REJECT_Security();
+            break;
         case 85://IDENTITY_REQUEST
-            translate_DL_IDENTITY_REQUEST();break;
+            if(headerType==720896)
+                        translate_DL_IDENTITY_REQUEST();
+                    else
+                        translate_DL_IDENTITY_REQUEST_Security();
+            break;
         case 93://SECURITY_MODE_COMMAND
-            translate_DL_SECURITY_MODE_COMMAND();break;
+            if(headerType==720896)
+                        translate_DL_SECURITY_MODE_COMMAND();
+                    else
+                        translate_DL_SECURITY_MODE_COMMAND_Security();
+            break;
         case 96://EMM_STATUS, both
-            translate_DL_EMM_STATUS();break;
+        if(headerType==720896)
+                        translate_DL_EMM_STATUS();
+                    else
+                        translate_DL_EMM_STATUS_Security();
+            break;
         case 97://EMM_INFORMATION
-            translate_DL_EMM_INFORMATION();break;
+            if(headerType==720896)
+                        translate_DL_EMM_INFORMATION();
+                    else
+                        translate_DL_EMM_INFORMATION_Security();
+            break;
         case 98://DOWNLINK_NAS_TRANSPORT
-            translate_DL_DOWNLINK_NAS_TRANSPORT();break;
+        if(headerType==720896)
+                        translate_DL_DOWNLINK_NAS_TRANSPORT();
+                    else
+                        translate_DL_DOWNLINK_NAS_TRANSPORT_Security();
+            break;
         case 100://CS_SERVICE_NOTIFICATION
-            translate_DL_CS_SERVICE_NOTIFICATION();break;
+        if(headerType==720896)
+                        translate_DL_CS_SERVICE_NOTIFICATION();
+                    else
+                        translate_DL_CS_SERVICE_NOTIFICATION_Security();
+            break;
         default:break;
     }
 }

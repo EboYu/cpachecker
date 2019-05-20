@@ -16,6 +16,7 @@ import org.sosy_lab.cpachecker.cfa.types.MachineModel;
 import org.sosy_lab.cpachecker.cfa.types.c.*;
 import org.sosy_lab.cpachecker.exceptions.UnrecognizedCodeException;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -24,25 +25,37 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.nulist.plugin.parser.CFABuilder.pointerOf;
 import static org.nulist.plugin.parser.CFGAST.*;
 import static org.nulist.plugin.parser.CFGNode.*;
+import static org.nulist.plugin.parser.CFGParser.*;
 import static org.nulist.plugin.util.ClassTool.*;
 import static org.nulist.plugin.util.FileOperations.readMCCMNCList;
 import static org.sosy_lab.cpachecker.cfa.ast.c.CIntegerLiteralExpression.ONE;
 import static org.sosy_lab.cpachecker.cfa.types.c.CVoidType.VOID;
 
-public class CFGHandleExpression {
+public class CFGHandleExpression implements Serializable {
+    public static final long serialVersionUID = 8560360679412730359L;
     private final CFGTypeConverter typeConverter;
     private final CBinaryExpressionBuilder binExprBuilder;
     public Map<Integer, CSimpleDeclaration> variableDeclarations;
     public Map<Integer, ADeclaration> globalDeclarations;
     private final String functionName;
+    private String projectPrefix;
 
     public CFGHandleExpression(LogManager pLogger,
                                String pFunctionName,
+                               String projectName,
                                CFGTypeConverter typeConverter){
         this.typeConverter = typeConverter;
         this.variableDeclarations = new HashMap<>();
         this.globalDeclarations = new HashMap<>();
         functionName = pFunctionName;
+        if(projectName.equals(UE))
+            projectPrefix = "UE_";
+        else if(projectName.equals(ENB))
+            projectPrefix = "ENB_";
+        else if(projectName.equals(MME))
+            projectPrefix = "MME_";
+        else
+            projectPrefix = "";
         binExprBuilder = new CBinaryExpressionBuilder(MachineModel.LINUX64, pLogger);
     }
 
@@ -159,8 +172,15 @@ public class CFGHandleExpression {
         CSimpleDeclaration assignedVarDeclaration;
         if(isGlobal || isFileStatic || isFunction){
             if(globalDeclarations.containsKey(normalizedVarName.hashCode())){
-                if(isFunction)
-                    assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
+                if(isFunction){
+                    if(globalDeclarations.containsKey(normalizedVarName.hashCode()))
+                        assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
+                    else
+                        assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(
+                                normalizedVarName.replace(projectPrefix,"").hashCode());
+                    if(assignedVarDeclaration==null)
+                        printWARNING("No such function: "+normalizedVarName);
+                }
                 else
                     assignedVarDeclaration = (CSimpleDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
             }
@@ -238,6 +258,9 @@ public class CFGHandleExpression {
             normalizedName = no_symbol.get_ast().pretty_print();
         else
             normalizedName = no_symbol.name().replace("-","_");
+
+        if(no_symbol.is_global()|| no_symbol.is_function())
+            normalizedName=projectPrefix+normalizedName;
 
         if(no_symbol.is_file_static()){
             return "static__"+normalizedName;
@@ -338,7 +361,7 @@ public class CFGHandleExpression {
                                                             FileLocation fileLocation)throws result{
         String assignedVar;
         if(isGlobal)
-            assignedVar = variable.get_ast().pretty_print();
+            assignedVar = projectPrefix+variable.get_ast().pretty_print();
         else
             assignedVar =getNormalizedVariableName(variable,fileLocation.getFileName());
 
@@ -347,7 +370,7 @@ public class CFGHandleExpression {
         //if(variable.is_global() || variable.is_file_static())
         if(isGlobal)
             if(globalDeclarations.containsKey(assignedVar.hashCode()))
-                return (CVariableDeclaration) globalDeclarations.get(assignedVar.hashCode());
+                return  (CDeclaration) globalDeclarations.get(assignedVar.hashCode());
         else
             if(variableDeclarations.containsKey(assignedVar.hashCode()))
                 return (CVariableDeclaration) variableDeclarations.get(assignedVar.hashCode());
@@ -362,6 +385,7 @@ public class CFGHandleExpression {
                 storageClass = getStorageClass(variable.get_ast());
 
             String normalizedName = assignedVar;
+
             String originalName = variable.get_ast().pretty_print();
             if(storageClass==CStorageClass.STATIC){
                 storageClass = CStorageClass.AUTO;
@@ -404,7 +428,7 @@ public class CFGHandleExpression {
                 functionScope = function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol()
                         .get_ast(ast_family.getC_UNNORMALIZED())
                         .get(ast_ordinal.getUC_SCOPE()).as_ast();
-            String functionName = function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
+            String functionName = projectPrefix+function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
             List<CParameterDeclaration> parameters = new ArrayList<>(functionType.getParameters().size());
             if(!functionType.getParameters().isEmpty()){
                 ast params = functionScope.get(ast_ordinal.getUC_PARAMETERS()).as_ast();
@@ -429,10 +453,11 @@ public class CFGHandleExpression {
             functionTypeWithNames.setName(functionName);
             CFunctionDeclaration functionDeclaration =
                     new CFunctionDeclaration(FileLocation.DUMMY,functionTypeWithNames,functionName,parameters);
+//            printf("Generate function: "+functionName);
             globalDeclarations.put(functionName.hashCode(), functionDeclaration);
             return functionDeclaration;
         }catch (result r){
-            String functionName = function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
+            String functionName = projectPrefix+function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
             if(functionName.equals("__builtin_bswap32")){
                 functionName = "__bswap_32";
                 if(globalDeclarations.containsKey(functionName.hashCode())){
@@ -459,6 +484,7 @@ public class CFGHandleExpression {
             CFunctionDeclaration functionDeclaration =
                     new CFunctionDeclaration(FileLocation.DUMMY,functionTypeWithNames,functionName,parameters);
             printWARNING("A function has no scope: "+ functionName+":"+ functionDeclaration.toString());
+//            printf("Generate no scope function: "+functionName);
             globalDeclarations.put(functionName.hashCode(), functionDeclaration);
             return functionDeclaration;
         }
@@ -1086,9 +1112,13 @@ public class CFGHandleExpression {
         }else if(value_ast.is_a(ast_class.getUC_FUNCTION_CALL())){
 
             String functionName = getFunctionCallResultName(value_ast);
-            if(variableDeclarations.containsKey(functionName.hashCode()))
+            if(variableDeclarations.containsKey((projectPrefix+functionName).hashCode())){
+                return new CIdExpression(fileLoc, variableDeclarations.get((projectPrefix+functionName).hashCode()));
+            } else if(variableDeclarations.containsKey(functionName.hashCode()))
                 return new CIdExpression(fileLoc, variableDeclarations.get(functionName.hashCode()));
-            else if(globalDeclarations.containsKey(functionName.hashCode())){
+            else if(globalDeclarations.containsKey((projectPrefix+functionName).hashCode())){
+                return new CIdExpression(fileLoc, (CSimpleDeclaration) globalDeclarations.get((projectPrefix+functionName).hashCode()));
+            }else if(globalDeclarations.containsKey(functionName.hashCode())){
                 return new CIdExpression(fileLoc, (CSimpleDeclaration) globalDeclarations.get(functionName.hashCode()));
             }else
                 throw new RuntimeException("No existing function call result: "+ functionName);
