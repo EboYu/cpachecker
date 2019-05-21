@@ -140,6 +140,8 @@ public class CFABuilder implements Serializable {
                     functionDeclarations.containsKey(funcName)) //oai has inline functions and asn generated codes have several same functions
                 return;
 
+            if(funcName.contains("malloc"))
+                System.out.println();
             //System.out.println(funcName);
             funcName=projectPrefix+funcName;
             CFGFunctionBuilder cfgFunctionBuilder =
@@ -161,7 +163,6 @@ public class CFABuilder implements Serializable {
 
         }else if(proc.get_kind().equals(procedure_kind.getLIBRARY())){
             String funcName = proc.name();
-
             CFGFunctionBuilder cfgFunctionBuilder =
                     new CFGFunctionBuilder(logger, typeConverter, proc,funcName,proc.name(), pFileName, this);
             // add function declaration

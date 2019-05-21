@@ -171,20 +171,16 @@ public class CFGHandleExpression implements Serializable {
         boolean isFunction = variableSymbol.is_function()||variableSymbol.is_static_function();
         CSimpleDeclaration assignedVarDeclaration;
         if(isGlobal || isFileStatic || isFunction){
-            if(globalDeclarations.containsKey(normalizedVarName.hashCode())){
-                if(isFunction){
-                    if(globalDeclarations.containsKey(normalizedVarName.hashCode()))
-                        assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
-                    else
-                        assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(
-                                normalizedVarName.replace(projectPrefix,"").hashCode());
-                    if(assignedVarDeclaration==null)
-                        printWARNING("No such function: "+normalizedVarName);
-                }
+            if(isFunction){
+                if(globalDeclarations.containsKey(normalizedVarName.hashCode()))
+                    assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
                 else
-                    assignedVarDeclaration = (CSimpleDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
-            }
-            else{
+                    assignedVarDeclaration = (CFunctionDeclaration) globalDeclarations.get(
+                            normalizedVarName.replace(projectPrefix,"").hashCode());
+            }else
+                assignedVarDeclaration = (CSimpleDeclaration) globalDeclarations.get(normalizedVarName.hashCode());
+
+            if(assignedVarDeclaration==null){
                 if(isFunction){
                     CFunctionType functionType;
                     CFunctionDeclaration functionDeclaration;
@@ -208,7 +204,6 @@ public class CFGHandleExpression implements Serializable {
                     return new CIdExpression(fileLocation, expressionType, normalizedVarName, variableDeclaration);
                 }
             }
-
                 //throw new RuntimeException("Global variable has no declaration: " + normalizedVarName);
         }else {
             if(variableDeclarations.containsKey(normalizedVarName.hashCode()))
@@ -428,7 +423,9 @@ public class CFGHandleExpression implements Serializable {
                 functionScope = function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol()
                         .get_ast(ast_family.getC_UNNORMALIZED())
                         .get(ast_ordinal.getUC_SCOPE()).as_ast();
+
             String functionName = projectPrefix+function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
+
             List<CParameterDeclaration> parameters = new ArrayList<>(functionType.getParameters().size());
             if(!functionType.getParameters().isEmpty()){
                 ast params = functionScope.get(ast_ordinal.getUC_PARAMETERS()).as_ast();
@@ -458,6 +455,7 @@ public class CFGHandleExpression implements Serializable {
             return functionDeclaration;
         }catch (result r){
             String functionName = projectPrefix+function.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
+
             if(functionName.equals("__builtin_bswap32")){
                 functionName = "__bswap_32";
                 if(globalDeclarations.containsKey(functionName.hashCode())){

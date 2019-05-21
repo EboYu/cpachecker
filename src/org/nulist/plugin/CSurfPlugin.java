@@ -63,7 +63,7 @@ public class CSurfPlugin {
         }
 
         //read serialized cfa and perform model checking
-        readSerializedCFA(arguments,cpacheckPath, projectPath);
+//        readSerializedCFA(arguments,cpacheckPath, projectPath);
         //read cfg files and translate them into cfa
         readCFGFiles(arguments,cpacheckPath,projectPath);
 
@@ -130,7 +130,7 @@ public class CSurfPlugin {
             printINFO("==================Finish MME==================");
             project.unload();
 
-//            compareGlobalName(builderMap);
+            compareGlobalName(builderMap);
             printINFO("==================Parsing Message Channel Model==================");
             FuzzyParser fuzzyParser = new FuzzyParser(cpaMain.logManager, MachineModel.LINUX64, builderMap);
 
@@ -164,36 +164,42 @@ public class CSurfPlugin {
             Map<Integer, ADeclaration> ueGlobalDeclarations = builderMap.get(UE).expressionHandler.globalDeclarations;
             Map<Integer, ADeclaration> enbGlobalDeclarations = builderMap.get(ENB).expressionHandler.globalDeclarations;
             Map<Integer, ADeclaration> mmeGlobalDeclarations = builderMap.get(MME).expressionHandler.globalDeclarations;
-            for(Integer i:ueGlobalDeclarations.keySet()){
-                if(enbGlobalDeclarations.containsKey(i)){
-                    ADeclaration ueDeclaration = ueGlobalDeclarations.get(i);
-                    ADeclaration enbDeclaration = enbGlobalDeclarations.get(i);
-                    boolean isFunction1 = ueDeclaration instanceof CFunctionDeclaration;
-                    boolean isFunction2 = enbDeclaration instanceof CFunctionDeclaration;
-                    fileWriter.write(ueDeclaration.getName()+" is "+isFunction1+ " in UE has the same name with "+ enbDeclaration.getName()+" is "+isFunction2+" in ENB\n");
-                }
-
-                if(mmeGlobalDeclarations.containsKey(i)){
-                    ADeclaration ueDeclaration = ueGlobalDeclarations.get(i);
-                    ADeclaration mmeDeclaration = mmeGlobalDeclarations.get(i);
-                    boolean isFunction1 = ueDeclaration instanceof CFunctionDeclaration;
-                    boolean isFunction2 = mmeDeclaration instanceof CFunctionDeclaration;
-                    fileWriter.write(ueDeclaration.getName()+" is "+isFunction1+ " in UE has the same name with "+ mmeDeclaration.getName()+" is "+isFunction2+ " in MME\n");
-                }
-
-            }
-            fileWriter.flush();
-            for(Integer i:enbGlobalDeclarations.keySet()){
-
-
-                if(mmeGlobalDeclarations.containsKey(i)){
-                    ADeclaration enbDeclaration = enbGlobalDeclarations.get(i);
-                    ADeclaration mmeDeclaration = mmeGlobalDeclarations.get(i);
-                    boolean isFunction1 = enbDeclaration instanceof CFunctionDeclaration;
-                    boolean isFunction2 = mmeDeclaration instanceof CFunctionDeclaration;
-                    fileWriter.write(enbDeclaration.getName()+" is "+isFunction1+ " in ENB has the same name with "+ mmeDeclaration.getName()+" is "+isFunction2+ " in MME\n");
-                }
-            }
+            if(ueGlobalDeclarations.containsKey("UE_malloc".hashCode()))
+                printf("There is UE_malloc in UE");
+            if(enbGlobalDeclarations.containsKey("ENB_malloc".hashCode()))
+                printf("There is ENB_malloc in ENB");
+            if(mmeGlobalDeclarations.containsKey("MME_malloc".hashCode()))
+                printf("There is MME_malloc in MME");
+//            for(Integer i:ueGlobalDeclarations.keySet()){
+//                if(enbGlobalDeclarations.containsKey(i)){
+//                    ADeclaration ueDeclaration = ueGlobalDeclarations.get(i);
+//                    ADeclaration enbDeclaration = enbGlobalDeclarations.get(i);
+//                    boolean isFunction1 = ueDeclaration instanceof CFunctionDeclaration;
+//                    boolean isFunction2 = enbDeclaration instanceof CFunctionDeclaration;
+//                    fileWriter.write(ueDeclaration.getName()+" is "+isFunction1+ " in UE has the same name with "+ enbDeclaration.getName()+" is "+isFunction2+" in ENB\n");
+//                }
+//
+//                if(mmeGlobalDeclarations.containsKey(i)){
+//                    ADeclaration ueDeclaration = ueGlobalDeclarations.get(i);
+//                    ADeclaration mmeDeclaration = mmeGlobalDeclarations.get(i);
+//                    boolean isFunction1 = ueDeclaration instanceof CFunctionDeclaration;
+//                    boolean isFunction2 = mmeDeclaration instanceof CFunctionDeclaration;
+//                    fileWriter.write(ueDeclaration.getName()+" is "+isFunction1+ " in UE has the same name with "+ mmeDeclaration.getName()+" is "+isFunction2+ " in MME\n");
+//                }
+//
+//            }
+//            fileWriter.flush();
+//            for(Integer i:enbGlobalDeclarations.keySet()){
+//
+//
+//                if(mmeGlobalDeclarations.containsKey(i)){
+//                    ADeclaration enbDeclaration = enbGlobalDeclarations.get(i);
+//                    ADeclaration mmeDeclaration = mmeGlobalDeclarations.get(i);
+//                    boolean isFunction1 = enbDeclaration instanceof CFunctionDeclaration;
+//                    boolean isFunction2 = mmeDeclaration instanceof CFunctionDeclaration;
+//                    fileWriter.write(enbDeclaration.getName()+" is "+isFunction1+ " in ENB has the same name with "+ mmeDeclaration.getName()+" is "+isFunction2+ " in MME\n");
+//                }
+//            }
             fileWriter.flush();
             fileWriter.close();
         }catch (IOException e){

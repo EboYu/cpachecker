@@ -537,7 +537,7 @@ public class ChannelBuildOperation {
         if(users==null)
             throw new RuntimeException("No users variable");
 
-        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("UE_calloc".hashCode());
+        CFunctionDeclaration calloc = (CFunctionDeclaration) cfaBuilder.expressionHandler.globalDeclarations.get("calloc".hashCode());
         if(calloc==null)
             throw new RuntimeException("No calloc function");
         List<CExpression> params = new ArrayList<>();
