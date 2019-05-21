@@ -204,7 +204,7 @@ public class CFACreator {
     name = "cfa.serialize",
     description = "export CFA as .ser file (dump Java objects)"
   )
-  private boolean serializeCfa = true;
+  private boolean serializeCfa = false;
 
   @Option(
     secure = true,
