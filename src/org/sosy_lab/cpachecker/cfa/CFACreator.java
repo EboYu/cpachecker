@@ -160,7 +160,7 @@ public class CFACreator {
         "Replace thread creation operations with a special function calls"
             + "so, any analysis can go through the function"
   )
-  private boolean enableThreadOperationsInstrumentation = false;
+  private boolean enableThreadOperationsInstrumentation = true;
 
   @Option(secure=true, name="analysis.useGlobalVars",
       description="add declarations for global variables before entry function")
@@ -172,11 +172,11 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.export",
       description="export CFA as .dot file")
-  private boolean exportCfa = true;
+  private boolean exportCfa = false;
 
   @Option(secure=true, name="cfa.exportPerFunction",
       description="export individual CFAs for function as .dot files")
-  private boolean exportCfaPerFunction = true;
+  private boolean exportCfaPerFunction = false;
 
   @Option(secure = true, name = "cfa.exportToC", description = "export CFA as C file")
   private boolean exportCfaToC = false;
@@ -187,7 +187,7 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.callgraph.export",
       description="dump a simple call graph")
-  private boolean exportFunctionCalls = true;
+  private boolean exportFunctionCalls = false;
 
   @Option(secure=true, name="cfa.callgraph.file",
       description="file name for call graph as .dot file")
@@ -235,7 +235,7 @@ public class CFACreator {
   @Option(secure=true, name="cfa.expandFunctionPointerArrayAssignments",
       description="When a function pointer array element is written with a variable as index, "
           + "create a series of if-else edges with explicit indizes instead.")
-  private boolean expandFunctionPointerArrayAssignments = false;
+  private boolean expandFunctionPointerArrayAssignments = true;
 
   @Option(secure=true, name="cfa.simplifyCfa",
         description="Remove all edges which don't have any effect on the program")
@@ -252,7 +252,7 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.useFunctionCallUnwinding",
       description="unwind recursive functioncalls (bounded to max call stack size)")
-  private boolean useFunctionCallUnwinding = false;
+  private boolean useFunctionCallUnwinding = true;
 
   @Option(secure=true, name="cfa.useCFACloningForMultiThreadedPrograms",
       description="clone functions of the CFA, such that there are several "
@@ -270,7 +270,7 @@ public class CFACreator {
     name = "cfa.createDependenceGraph",
     description = "Whether to create dependence graph for the CFA of the program"
   )
-  private boolean createDependenceGraph = false;
+  private boolean createDependenceGraph = true;
 
   @Option(
       secure = true,

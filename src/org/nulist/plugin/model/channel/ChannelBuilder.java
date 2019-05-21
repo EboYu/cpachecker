@@ -51,6 +51,7 @@ import static org.nulist.plugin.model.ChannelBuildOperation.*;
 import static org.nulist.plugin.model.channel.ChannelConstructer.*;
 import static org.nulist.plugin.parser.CFGParser.*;
 import static org.nulist.plugin.util.ClassTool.printWARNING;
+import static org.nulist.plugin.util.FileOperations.getQualifiedName;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.removeEdgeFromNodes;
 
 /**
@@ -688,7 +689,7 @@ public class ChannelBuilder {
                 paramTypes.add(type);
 
                 CParameterDeclaration parameterDeclaration = new CParameterDeclaration(fileLocation,type,param);
-                parameterDeclaration.setQualifiedName(param);
+                parameterDeclaration.setQualifiedName(getQualifiedName(functionName,param));
                 functionBuilder.expressionHandler.variableDeclarations.put(param.hashCode(),parameterDeclaration);
                 parameterDeclarations.add(parameterDeclaration);
             }

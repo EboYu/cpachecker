@@ -130,7 +130,7 @@ public class CSurfPlugin {
             printINFO("==================Finish MME==================");
             project.unload();
 
-            compareGlobalName(builderMap);
+//            compareGlobalName(builderMap);
             printINFO("==================Parsing Message Channel Model==================");
             FuzzyParser fuzzyParser = new FuzzyParser(cpaMain.logManager, MachineModel.LINUX64, builderMap);
 

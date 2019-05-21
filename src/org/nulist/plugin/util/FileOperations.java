@@ -7,6 +7,7 @@
  **/
 package org.nulist.plugin.util;
 
+import com.grammatech.cs.ast;
 import com.grammatech.cs.point;
 import com.grammatech.cs.procedure;
 import com.grammatech.cs.result;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import static org.nulist.plugin.parser.CFGNode.getFileLineNumber;
+import static org.nulist.plugin.util.ClassTool.printf;
 
 public class FileOperations {
     /**
@@ -72,6 +74,12 @@ public class FileOperations {
         return pFileName + "::" + pFuncName;
     }
 
+    public static void printASTField(ast ast)throws result{
+        printf("A ast:"+ast.toString()+" has the following fields:");
+        for(int i=0;i<ast.fields().size();i++){
+            printf(ast.fields().get(i).toString());
+        }
+    }
 
     public static Map<Integer, String> readMCCMNCList(){
         Map<Integer, String> mccMNCMap = new HashMap<>();

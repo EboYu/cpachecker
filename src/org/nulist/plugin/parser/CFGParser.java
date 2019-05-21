@@ -190,7 +190,7 @@ public class CFGParser implements Parser{
                 (name.contains("openair-cn/src/nas") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/s1ap/s1ap_") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/mme") && projectName.equals(MME)) ||
-                (name.contains("openair-cn/src/oai_mme") && projectName.equals(MME)) ||
+                (name.contains("openair-cn/src/oai_mme") && !name.endsWith("oai_mme_log.c") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/mme_app") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/common") &&
                         !name.endsWith("intertask_interface.c") &&

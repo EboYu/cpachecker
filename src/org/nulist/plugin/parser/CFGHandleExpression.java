@@ -27,7 +27,7 @@ import static org.nulist.plugin.parser.CFGAST.*;
 import static org.nulist.plugin.parser.CFGNode.*;
 import static org.nulist.plugin.parser.CFGParser.*;
 import static org.nulist.plugin.util.ClassTool.*;
-import static org.nulist.plugin.util.FileOperations.readMCCMNCList;
+import static org.nulist.plugin.util.FileOperations.*;
 import static org.sosy_lab.cpachecker.cfa.ast.c.CIntegerLiteralExpression.ONE;
 import static org.sosy_lab.cpachecker.cfa.types.c.CVoidType.VOID;
 
@@ -311,9 +311,9 @@ public class CFGHandleExpression implements Serializable {
         ast variable = init.get(ast_ordinal.getUC_VARIABLE()).as_ast();
         symbol varSymbol = variable.get(ast_ordinal.getUC_ABS_LOC()).as_symbol();
         CType cType = typeConverter.getCType(variable.get(ast_ordinal.getBASE_TYPE()).as_ast(), this);
-        if(typeConverter.isFunctionPointerType(cType)){
-            cType = typeConverter.convertCFuntionType(cType,varSymbol.name(), fileLocation);
-        }
+//        if(typeConverter.isFunctionPointerType(cType)){
+//            cType = typeConverter.convertCFuntionType(cType,varSymbol.name(), fileLocation);
+//        }
 
         CInitializer initializer = getInitializerFromUC(init, cType, fileLocation);
 
@@ -438,7 +438,7 @@ public class CFGHandleExpression implements Serializable {
                     CParameterDeclaration parameter =
                             new CParameterDeclaration(FileLocation.DUMMY,paramType,paramName);
 
-                    parameter.setQualifiedName(paramName);
+                    parameter.setQualifiedName(getQualifiedName(functionName,paramName));
                     if(!paramName.equals("__builtin_va_alist"))
                         parameters.add(parameter);
                 }
@@ -471,6 +471,7 @@ public class CFGHandleExpression implements Serializable {
 
                     CParameterDeclaration parameter =
                             new CParameterDeclaration(FileLocation.DUMMY,paramType,"");
+                    parameter.setQualifiedName(getQualifiedName(functionName,""));
                     parameters.add(parameter);
                 }
             }
@@ -504,9 +505,10 @@ public class CFGHandleExpression implements Serializable {
         ast operands = un_ast.get(ast_ordinal.getUC_OPERANDS()).as_ast();
         ast oper1 = operands.children().get(0).as_ast();
         CType leftType = typeConverter.getCType(oper1.get(ast_ordinal.getBASE_TYPE()).as_ast(), this);
-        if(typeConverter.isFunctionPointerType(leftType)){
-            leftType = typeConverter.convertCFuntionType(leftType,"",fileLocation);
-        }
+//        if(typeConverter.isFunctionPointerType(leftType)){
+//            printASTField(oper1);
+//            leftType = typeConverter.convertCFuntionType(leftType,"",fileLocation);
+//        }
 
         CExpression variable = getExpressionFromUC(oper1, leftType, fileLocation);
 
@@ -1076,20 +1078,6 @@ public class CFGHandleExpression implements Serializable {
             CType type = typeConverter.getCType(routine.get(ast_ordinal.getBASE_TYPE()).as_ast(), this);
             return getAssignedIdExpression(routine,type,fileLoc);
 
-//            String functionName = routine.get(ast_ordinal.getBASE_ABS_LOC()).as_symbol().name();
-//            if(type instanceof CTypedefType){
-//                CFunctionType functionType = (CFunctionType) ((CTypedefType)type).getRealType();
-//                CFunctionTypeWithNames cFunctionTypeWithNames =
-//                        typeConverter.convertCFuntionType(functionType, functionName, fileLoc);
-//                type = new CTypedefType(type.isConst(),type.isVolatile(),
-//                        ((CTypedefType) type).getName(),cFunctionTypeWithNames);
-//                return getAssignedIdExpression(routine,type,fileLoc);
-//            }else {
-//
-//                CFunctionTypeWithNames cFunctionTypeWithNames =
-//                        typeConverter.convertCFuntionType((CFunctionType) type, functionName, fileLoc);
-//                return getAssignedIdExpression(routine,cFunctionTypeWithNames,fileLoc);
-//            }
         }else if(value_ast.is_a(ast_class.getUC_ADDRESS_OP())){// &d;
 
             ast operands = value_ast.get(ast_ordinal.getUC_OPERANDS()).as_ast();
@@ -1099,9 +1087,9 @@ public class CFGHandleExpression implements Serializable {
             //a function
             if(isFunction(variable)){
                 ast routine = variable.get(ast_ordinal.getUC_ROUTINE()).as_ast();
-                CFunctionTypeWithNames cFunctionTypeWithNames =
-                        typeConverter.convertCFuntionType((CFunctionType) variableType, "", fileLoc);
-                operand = getAssignedIdExpression(routine, cFunctionTypeWithNames, fileLoc);
+//                CFunctionTypeWithNames cFunctionTypeWithNames =
+//                        typeConverter.convertCFuntionType((CFunctionType) variableType, "", fileLoc);
+                operand = getAssignedIdExpression(routine, variableType, fileLoc);
             }else
                 operand = getExpressionFromUC(variable, variableType, fileLoc);
 
