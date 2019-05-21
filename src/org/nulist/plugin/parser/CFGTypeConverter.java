@@ -93,7 +93,6 @@ public class CFGTypeConverter implements Serializable {
             } else if(isTypeRef(type)){
                 ast originTypeAST = type.get(ast_ordinal.getBASE_TYPE()).as_ast();
                 CType cTypedefType = null;
-
                 if(typeString.startsWith("const ")){
                     cTypedefType = getCType(originTypeAST, true, expressionhandler);
                 }else {
@@ -136,6 +135,12 @@ public class CFGTypeConverter implements Serializable {
             }else if(isEnumType(type)){
                 ast constantList = type.get(ast_ordinal.getUC_CONSTANT_LIST()).as_ast();
                 List<CEnumType.CEnumerator> enumerators = new ArrayList<>();
+                String typeName = typeString;
+                if(typeString.endsWith("<UNNAMED>") || typeString.endsWith("<unnamed>")){
+                    typeName = handleUnnamedType(type);
+                    typeString = "";
+                }
+
                 for(int i=0;i<constantList.children().size();i++){
                     ast enumer = constantList.children().get(i).as_ast();
                     String name = enumer.pretty_print();
@@ -147,15 +152,16 @@ public class CFGTypeConverter implements Serializable {
                                                       name,
                                                        CNumericTypes.INT,
                                                       value);
+                    //enumerator.setEnum(cEnumType);
                     enumerators.add(enumerator);
-                }
-                String typeName = typeString;
-                if(typeString.endsWith("<UNNAMED>") || typeString.endsWith("<unnamed>")){
-                    typeName = handleUnnamedType(type);
-                    typeString = "";
                 }
                 CEnumType cEnumType = new CEnumType(isConst, false,
                         enumerators, typeName, typeString);
+
+                cEnumType.getEnumerators().forEach(enumerator->{
+                    enumerator.setEnum(cEnumType);
+                });
+
                 CElaboratedType cElaboratedType= new CElaboratedType(isConst, false,
                                             CComplexType.ComplexTypeKind.ENUM,
                                              typeName,typeString,cEnumType);
@@ -415,6 +421,7 @@ public class CFGTypeConverter implements Serializable {
         List<CParameterDeclaration> cParameterDeclarations = new ArrayList<>();
         for(CType type:cFunctionType.getParameters()){
             CParameterDeclaration parameterDeclaration = new CParameterDeclaration(fileLocation, type,"");
+            parameterDeclaration.setQualifiedName("");
             cParameterDeclarations.add(parameterDeclaration);
         }
         CFunctionTypeWithNames typeWithNames = new CFunctionTypeWithNames(cFunctionType.getReturnType(), cParameterDeclarations, cFunctionType.takesVarArgs());

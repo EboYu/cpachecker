@@ -38,6 +38,7 @@ import static org.nulist.plugin.util.ClassTool.printWARNING;
 import static org.nulist.plugin.util.ClassTool.printf;
 import static org.nulist.plugin.util.FileOperations.getLocation;
 import static org.nulist.plugin.model.action.ITTIAbstract.*;
+import static org.nulist.plugin.util.FileOperations.getQualifiedName;
 import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.addEdgeUnconditionallyToCFA;
 
 public class CFGFunctionBuilder implements Serializable {
@@ -138,7 +139,7 @@ public class CFGFunctionBuilder implements Serializable {
                 CParameterDeclaration parameter =
                         new CParameterDeclaration(fileLocation,paramType,paramName);
 
-                parameter.setQualifiedName(paramName);
+                parameter.setQualifiedName(getQualifiedName(functionName,paramName));
                 expressionHandler.variableDeclarations.put(paramName.hashCode(),parameter);
                 if(!paramName.equals("__builtin_va_alist"))
                     parameters.add(parameter);
