@@ -476,9 +476,9 @@ void translate_UL_DETACH_REQUEST(){
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.identity_digit14=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.digit14;//No corresponding Type
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.digit15;//No corresponding Type
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.num_digits=14;
-        if(CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15!=15)
-                   CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.num_digits+=1;
-
+        if(CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15!=15){
+            CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.imsi.num_digits+=1;
+        }
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.spare=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.spare;
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.oddeven=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.oddeven;
         CN_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.typeofidentity=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.detach_request.gutiorimsi.guti.typeofidentity;
@@ -642,7 +642,8 @@ void translate_UL_TRACKING_AREA_UPDATE_REQUEST(){
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.digit15;//No corresponding Type
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.num_digits=14;//No corresponding Type
         if(CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.identity_digit15!=15){
-                   CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.num_digits+=1;}
+                   CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.oldguti.imei.num_digits+=1;
+                   }
 
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.presencemask=(uint32_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.presencemask;
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.noncurrentnativenaskeysetidentifier.tsc=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.noncurrentnativenaskeysetidentifier.tsc;
@@ -668,7 +669,8 @@ void translate_UL_TRACKING_AREA_UPDATE_REQUEST(){
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.digit15;//No corresponding Type
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits=14;//No corresponding Type
         if(CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.identity_digit15!=15){
-                   CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits+=1;}
+                   CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits+=1;
+                   }
 
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.guti.spare=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.guti.spare;
 		CN_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.guti.oddeven=(uint8_t)UE_channel_message_cache->nas_message.nas_message.plain.emm.tracking_area_update_request.additionalguti.guti.oddeven;
@@ -2082,8 +2084,10 @@ void translate_UL_DETACH_REQUEST_Security(){
         CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.identity_digit14=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.digit14;//No corresponding Type
         CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.digit15;//No corresponding Type
         CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.num_digits=14;
-        if(CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15!=15)
-                   CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.num_digits+=1;
+        if(CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.identity_digit15!=15){
+            CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.imsi.num_digits+=1;
+        }
+
 
         CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.guti.spare=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.guti.spare;
         CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.guti.oddeven=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.detach_request.gutiorimsi.guti.oddeven;
@@ -2248,7 +2252,8 @@ void translate_UL_TRACKING_AREA_UPDATE_REQUEST_Security(){
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.digit15;//No corresponding Type
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.num_digits=14;//No corresponding Type
         if(CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.identity_digit15!=15){
-                   CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.num_digits+=1;}
+                   CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.oldguti.imei.num_digits+=1;
+                   }
 
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.presencemask=(uint32_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.presencemask;
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.noncurrentnativenaskeysetidentifier.tsc=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.noncurrentnativenaskeysetidentifier.tsc;
@@ -2274,7 +2279,8 @@ void translate_UL_TRACKING_AREA_UPDATE_REQUEST_Security(){
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.identity_digit15=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.digit15;//No corresponding Type
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits=14;//No corresponding Type
         if(CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.oddeven==1 && CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.identity_digit15!=15){
-                   CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits+=1;}
+                   CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.imsi.num_digits+=1;
+                   }
 
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.guti.spare=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.guti.spare;
 		CN_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.guti.oddeven=(uint8_t)UE_channel_message_cache->nas_message.nas_message.security_protected.plain.emm.tracking_area_update_request.additionalguti.guti.oddeven;

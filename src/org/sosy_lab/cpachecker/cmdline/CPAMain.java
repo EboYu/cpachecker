@@ -141,7 +141,8 @@ public class CPAMain {
     final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
     try {
       CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
-      cfaCreator.readSerializedCFA(cfafile);
+      CFA cfa = cfaCreator.readSerializedCFA(cfafile);
+      cfaCreator.exportCFAAsync(cfa);
     }catch (Exception e){
       e.printStackTrace();
     }

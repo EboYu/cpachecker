@@ -111,13 +111,9 @@ public class CFGParser implements Parser{
         procedure proc = project.find_procedure(ITTI_ALLOC_NEW_MESSAGE);
         if(proc!=null)
             ChannelBuildOperation.generateITTI_ALLOC_NEW_MESSAGE(cfaBuilder,proc);
-        proc = project.find_procedure(ITTI_SEND_MSG_TO_TASKS);
-        //procedure proc1 = project.find_procedure(ITTI_SEND_MSG_TO_TASKS+extendSuffix);
-        if(proc!=null){
-            //cfaBuilder.buildGlobalDeclaration(proc, project.name(), true);
-
-        }
-
+        procedure proc1 = project.find_procedure(ITTI_SEND_MSG_TO_TASKS);
+        if(proc1!=null)
+            cfaBuilder.buildGlobalDeclaration(proc1,project.name(),true);
         parseTimer.stop();
         return cfaBuilder;
     }
@@ -159,22 +155,30 @@ public class CFGParser implements Parser{
                 && (projectName.equals(UE) || projectName.equals(ENB))) || //AS application protocol interfaces between UE and ENB: radio resource control
                 (name.contains("S1AP_R14/S1AP_") && projectName.equals(ENB)) || //application protocol interfaces between MME and ENB: UE context management
         //(name.contains("X2AP_R14") && projectName.equals(ENB)) || //application protocol interfaces between enbs for handover (UE mobility) and/or self organizing network related function:
-                (name.contains("openair2/RRC") && (projectName.equals(UE) || projectName.equals(ENB))) || //
+                (name.contains("openair2/RRC") &&
+                        ((!name.endsWith("RRC/LTE/rrc_UE.c") && projectName.equals(ENB)) ||
+                                (!name.contains("RRC/LTE/rrc_eNB") && projectName.equals(UE)))) ||
                 ((name.contains("openair2/LAYER2/MAC/config.c")||name.contains("openair2/LAYER2/MAC/main.c")) &&  projectName.equals(ENB)) || //
                 ((name.contains("openair2/LAYER2/MAC/config_ue.c")||name.contains("openair2/LAYER2/MAC/main_ue.c")) &&  projectName.equals(UE)) || //
                 name.contains("openair2/COMMON") ||
-                (name.contains("openair2/ENB_APP") && !name.contains("flexran") && !name.contains("NB_IoT")  && projectName.equals(ENB)) ||
+                (name.contains("openair2/ENB_APP") && !(name.contains("flexran")
+                        ||name.contains("NB_IoT")
+                        ||name.contains("enb_config_eMTC"))  && projectName.equals(ENB)) ||
                 name.contains("common/utils/channel") ||
                 name.endsWith("common/utils/ocp_itti/intertask_interface.h") ||
-                name.contains("openair2/LAYER2/PDCP_v10.1.0/pdcp.c") ||
+                //name.contains("openair2/LAYER2/PDCP_v10.1.0/pdcp.c") ||
                 (name.contains("targets/RT/USER/lte-ue.c") && projectName.equals(UE)) ||
                 (name.contains("targets/RT/USER/lte-uesoftmodem.c") && projectName.equals(UE)) ||
                 (name.contains("targets/RT/USER/lte-enb.c") && projectName.equals(ENB)) ||
                 (name.contains("targets/RT/USER/lte-softmodem.c") && projectName.equals(ENB)) ||
                 name.contains("targets/RT/USER/lte-softmodem-common.c") ||
                 (name.contains("openair3/S1AP") && projectName.equals(ENB)) ||
-                (name.contains("openair3/NAS/UE") && projectName.equals(UE)) ||
-                (name.contains("openair3/NAS/TOOLS") && projectName.equals(UE)) ||
+                (name.contains("openair3/NAS/UE") && !(name.endsWith("nas_parser.c")||name.endsWith("UEprocess.c")) && projectName.equals(UE)) ||
+                (name.contains("openair3/NAS/TOOLS") && !(name.endsWith("usim.c")||
+                        name.endsWith("nvram.c")||
+                        name.endsWith("fs.c")||
+                        name.endsWith("display.c")||
+                        name.endsWith("conf2uedata.c")) && projectName.equals(UE)) ||
                 (name.contains("openair3/NAS/COMMON/API") && projectName.equals(UE)) ||
                 (name.contains("openair3/NAS/COMMON/EMM") && projectName.equals(UE)) ||
                 (name.contains("openair3/NAS/COMMON/ESM") && projectName.equals(UE)) ||
@@ -188,14 +192,18 @@ public class CFGParser implements Parser{
                 name.contains("openair3/COMMON") ||
                 name.contains("openair3/UTILS") ||
                 (name.contains("openair-cn/src/nas") && projectName.equals(MME)) ||
-                (name.contains("openair-cn/src/s1ap/s1ap_") && projectName.equals(MME)) ||
+                (name.contains("openair-cn/src/s1ap/s1ap_") && !(name.endsWith("s1ap_eNB_trace.c")||
+                        name.contains("s1ap_eNB_overload.c")||
+                        name.contains("s1ap_eNB_encoder.c")||
+                        name.contains("s1ap_eNB_decoder.c")) &&projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/mme") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/oai_mme") && !name.endsWith("oai_mme_log.c") && projectName.equals(MME)) ||
                 (name.contains("openair-cn/src/mme_app") && projectName.equals(MME)) ||
-                (name.contains("openair-cn/src/common") &&
-                        !name.endsWith("intertask_interface.c") &&
-                        !name.endsWith("intertask_interface_dump.c") && projectName.equals(MME)) ||
-                (name.contains("openair-cn/src/utils") && !name.contains("openair-cn/src/utils/log") && projectName.equals(MME)) ||
+//                (name.contains("openair-cn/src/common") &&
+//                        !name.endsWith("intertask_interface.c") &&
+//                        !name.endsWith("intertask_interface_dump.c") && projectName.equals(MME)) ||
+                (name.contains("openair-cn/src/utils/hashtable")  && projectName.equals(MME)) ||
+                (name.contains("openair-cn/src/utils/mcc_mnc")  && projectName.equals(MME)) ||
                 (name.contains("CMakeFiles/r10.5/S1ap") && projectName.equals(MME));//s1ap
     }
 

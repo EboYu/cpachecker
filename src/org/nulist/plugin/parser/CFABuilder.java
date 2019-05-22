@@ -132,12 +132,8 @@ public class CFABuilder implements Serializable {
         if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())){//
             String funcName = proc.name();
             if((funcName.equals("main") && !isProjectMainFunction(pFileName,projectName)) ||
-                    funcName.equals("cmpint") ||
-                    funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
-                    funcName.startsWith("dump_") ||
-                    funcName.startsWith("memb_") ||
-                    funcName.contains("_constraint")||
-                    functionDeclarations.containsKey(funcName)) //oai has inline functions and asn generated codes have several same functions
+                    ignoredFunction(pFileName,funcName)||
+                    cfgFunctionBuilderMap.containsKey(funcName)) //oai has inline functions and asn generated codes have several same functions
                 return;
 
             //System.out.println(funcName);
@@ -188,20 +184,15 @@ public class CFABuilder implements Serializable {
             procedure proc = proc_it.current();
             if(proc.get_kind().equals(procedure_kind.getUSER_DEFINED())){
                 String funcName = proc.name();
-                if(funcName.equals("cmpint") ||
-                        funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
-                        funcName.equals("rrc_control_socket_init") ||
-                        funcName.contains("ASN_DEBUG")||
-                        funcName.contains("_ASN_STACK_OVERFLOW_CHECK")||
-                        funcName.startsWith("dump_") || funcName.startsWith("memb_")|| funcName.equals("init_UE_stub_single_thread")){
-
-                }else if(!functionFilter(cu.name(),funcName)){
+                if(!functionFilter(cu.name(),funcName)){
                     funcName = projectPrefix+funcName;
-                    System.out.println(funcName);
-                    CFGFunctionBuilder cfgFunctionBuilder = cfgFunctionBuilderMap.get(funcName);
-                    if(!cfgFunctionBuilder.isFinished){
-                        boolean nofinish = notfinishFunctionBuild(cu.name(),funcName.replace(projectPrefix,""));
-                        cfgFunctionBuilder.visitFunction(!nofinish);
+                    if(cfgFunctionBuilderMap.containsKey(funcName)){
+                        System.out.println(funcName);
+                        CFGFunctionBuilder cfgFunctionBuilder = cfgFunctionBuilderMap.get(funcName);
+                        if(!cfgFunctionBuilder.isFinished){
+                            boolean nofinish = notfinishFunctionBuild(cu.name(),funcName.replace(projectPrefix,""));
+                            cfgFunctionBuilder.visitFunction(!nofinish);
+                        }
                     }
                 }
             }
@@ -257,45 +248,84 @@ public class CFABuilder implements Serializable {
     }
 
 
+    private boolean ignoredFunction(String filename, String funcName){
+        return funcName.equals("cmpint") ||
+                funcName.equals("ASN__STACK_OVERFLOW_CHECK") ||
+                funcName.equals("rrc_control_socket_init") ||
+                funcName.contains("ASN_DEBUG")||
+                funcName.contains("_ASN_STACK_OVERFLOW_CHECK")||
+                funcName.startsWith("dump_") ||
+                funcName.startsWith("memb_")||
+                funcName.equals("init_UE_stub_single_thread")||
+                funcName.contains("_constraint")||
+                (projectName.equals(UE)&& filename.endsWith("asn1_msg.c") &&
+                        (funcName.equals("do_MIB")||
+                                funcName.equals("do_MIB_SL")||
+                                funcName.equals("do_SIB1")||
+                                funcName.equals("do_SIB23")||
+                                funcName.equals("do_RRCConnectionSetup")||
+                                funcName.equals("do_RRCConnectionSetup_BR")||
+                                funcName.equals("do_RRCConnectionReconfiguration_BR")||
+                                funcName.equals("do_RRCConnectionReconfiguration")||
+                                funcName.equals("do_RRCConnectionReestablishment")||
+                                funcName.equals("do_RRCConnectionReestablishmentReject")||
+                                funcName.equals("do_RRCConnectionReject")||
+                                funcName.equals("do_RRCConnectionRelease")||
+                                funcName.equals("do_MBSFNAreaConfig")||
+                                funcName.equals("do_DLInformationTransfer")||
+                                funcName.equals("do_Paging")||
+                                funcName.equals("do_UECapabilityEnquiry")||
+                                funcName.equals("do_HandoverPreparation")||
+                                funcName.equals("do_HandoverCommand")||
+                                funcName.equals("do_SecurityModeCommand")))||
+                ((filename.endsWith("lte-uesoftmodem.c")||filename.endsWith("lte-softmodem.c")) &&
+                        !funcName.equals("main") &&
+                        !funcName.equals("set_default_frame_parms") &&
+                        !funcName.equals("get_options") )||
+                (filename.endsWith("lte-ue.c") &&
+                        !funcName.equals("init_UE") &&
+                        !funcName.equals("init_ue_vars"))||
+                (projectName.equals(ENB)&& filename.endsWith("asn1_msg.c") &&
+                        (funcName.equals("do_RRCConnectionRequest")||
+                                funcName.equals("do_SidelinkUEInformation")||
+                                funcName.equals("do_RRCConnectionSetupComplete")||
+                                funcName.equals("do_RRCConnectionSetup_BR")||
+                                funcName.equals("do_RRCConnectionReconfiguration_BR")||
+                                funcName.equals("do_RRCConnectionReconfigurationComplete")||
+                                funcName.equals("do_MeasurementReport")||
+                                funcName.equals("fill_ue_capability")||
+                                funcName.equals("do_ULInformationTransfer")))||
+                funcName.equals("mainOld")||
+                funcName.equals("init_UE_threads")||
+                funcName.equals("init_thread")||
+                funcName.equals("init_UE_stub")||
+                funcName.equals("UE_thread_synch")||
+                funcName.equals("UE_thread")||
+                funcName.equals("xer__print2s")||
+                funcName.equals("xer_sprint")||
+                funcName.startsWith("asn_")||
+                (funcName.startsWith("decode_") && !(filename.endsWith("rrc_UE.c")))||
+                funcName.startsWith("nas_message_decode")||
+                funcName.endsWith("test")||
+                funcName.equals("rrc_ue_task")||
+                funcName.equals("nas_ue_task")||
+                funcName.equals("rrc_enb_task")||
+                funcName.equals("rrc_enb_process_itti_msg")||
+                funcName.equals("s1ap_eNB_process_itti_msg")||
+                funcName.equals("s1ap_eNB_task")||
+                funcName.equals("nas_intertask_interface")||
+                funcName.equals("mme_app_thread")||
+                funcName.equals("s1ap_mme_thread")||
+                (projectName.equals(MME) && filename.contains("CMakeFiles/r10.5"))||
+                (filename.contains("openair2/LAYER2/MAC/main_ue.c") && !(funcName.equals("mac_top_init_ue")||funcName.equals("l2_init_ue")))||
+                (filename.contains("openair2/LAYER2/MAC/main.c") && (funcName.equals("init_slice_info")||funcName.equals("rlc_mac_init_global_param")));
+
+    }
+
     private boolean functionFilter(String filename, String functionName){
         return isITTITaskProcessFunction(functionName)||
                 functionName.equals("create_tasks_ue")||//start itti tasks in ue
                 functionName.equals("create_tasks")||
-                functionName.equals("mainOld")||
-                functionName.equals("init_UE_threads")||
-                functionName.equals("init_thread")||
-                functionName.equals("init_UE_stub")||
-                functionName.equals("UE_thread_synch")||
-                functionName.equals("UE_thread")||
-                (projectName.equals(UE)&& filename.endsWith("asn1_msg.c") &&
-                        (functionName.equals("do_MIB")||
-                                functionName.equals("do_MIB_SL")||
-                                functionName.equals("do_SIB1")||
-                                functionName.equals("do_SIB23")||
-                                functionName.equals("do_RRCConnectionSetup")||
-                                functionName.equals("do_RRCConnectionSetup_BR")||
-                                functionName.equals("do_RRCConnectionReconfiguration_BR")||
-                                functionName.equals("do_RRCConnectionReconfiguration")||
-                                functionName.equals("do_RRCConnectionReestablishment")||
-                                functionName.equals("do_RRCConnectionReestablishmentReject")||
-                                functionName.equals("do_RRCConnectionReject")||
-                                functionName.equals("do_RRCConnectionRelease")||
-                                functionName.equals("do_MBSFNAreaConfig")||
-                                functionName.equals("do_DLInformationTransfer")||
-                                functionName.equals("do_Paging")||
-                                functionName.equals("do_UECapabilityEnquiry")||
-                                functionName.equals("do_HandoverPreparation")||
-                                functionName.equals("do_HandoverCommand")||
-                                functionName.equals("do_SecurityModeCommand")))||
-                (projectName.equals(ENB)&& filename.endsWith("asn1_msg.c") &&
-                        (functionName.equals("do_RRCConnectionRequest")||
-                                functionName.equals("do_SidelinkUEInformation")||
-                                functionName.equals("do_RRCConnectionSetupComplete")||
-                                functionName.equals("do_RRCConnectionReconfigurationComplete")||
-                                functionName.equals("do_MeasurementReport")||
-                                functionName.equals("fill_ue_capability")||
-                                functionName.equals("do_ULInformationTransfer")))||
-                (filename.contains("build/CMakeFiles") && functionName.endsWith("_constraint"))||
                 (filename.contains("openair2/LAYER2/MAC/main_ue.c") && !(functionName.equals("mac_top_init_ue")||functionName.equals("l2_init_ue")))||
                 (filename.contains("openair2/LAYER2/MAC/main.c") && (functionName.equals("init_slice_info")||functionName.equals("rlc_mac_init_global_param")));//start itti tasks in enb
     }

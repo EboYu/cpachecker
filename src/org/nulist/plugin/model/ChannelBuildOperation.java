@@ -167,7 +167,8 @@ public class ChannelBuildOperation {
      * @return void
      **/
     public static void generateITTI_SEND_TO_TASK(CFABuilder cfaBuilder, CFunctionDeclaration abstractfunction){
-        String functionName = ITTI_SEND_MSG_TO_TASKS;
+
+        String functionName = cfaBuilder.projectPrefix+ITTI_SEND_MSG_TO_TASKS;
 
         if(cfaBuilder.cfgFunctionBuilderMap.containsKey(functionName)){
 

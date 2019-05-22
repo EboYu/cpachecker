@@ -183,8 +183,6 @@ public class ChannelBuilder {
                 case "ENB_do_SIB1":
                 case "ENB_do_SIB23":
                 case "ENB_do_RRCConnectionSetup":
-                case "ENB_do_RRCConnectionSetup_BR":
-                case "ENB_do_RRCConnectionReconfiguration_BR":
                 case "ENB_do_RRCConnectionReconfiguration":
                 case "ENB_do_RRCConnectionReestablishment":
                 case "ENB_do_RRCConnectionReestablishmentReject":
@@ -860,8 +858,8 @@ public class ChannelBuilder {
             ElseStatement elseStatement = astNode.getElseNode();
             CFANode elseCFANode = functionBuilder.newCFANode();
             handleIfCondition(functionBuilder,condition,startNode,ifnode,elseCFANode);
+            handleStatement(functionBuilder, statement, ifnode,endNode);
             handleStatement(functionBuilder,elseStatement, elseCFANode, endNode);
-
         }else {
             handleIfCondition(functionBuilder,condition,startNode,ifnode,endNode);
             handleStatement(functionBuilder, statement, ifnode,endNode);
@@ -1248,9 +1246,10 @@ public class ChannelBuilder {
     }
 
     public void switchStatement(CFGFunctionBuilder functionBuilder, SwitchStatement astNode, CFANode startNode, CFANode endNode){
+
         String switchString = astNode.getEscapedCodeStr();
-        AstNode condition = astNode.getChild(0);
-        AstNode statement = astNode.getChild(1);
+        Expression condition = astNode.getCondition();
+        Statement statement = astNode.getStatement();
 
         String variableString = condition.getEscapedCodeStr();
         CFANode switchNode = functionBuilder.newCFANode();
@@ -1258,7 +1257,6 @@ public class ChannelBuilder {
         functionBuilder.addToCFA(new BlankEdge(switchString, fileLocation, startNode, switchNode, switchString));
 
         CExpression variableExpr = getExpressionFromString(functionBuilder,variableString);
-
         CFANode trueNode, falseNode, lastnode=switchNode;
         for(int i=0;i<statement.getChildCount();i++){
             AstNode node = statement.getChild(i);
@@ -1309,9 +1307,9 @@ public class ChannelBuilder {
                         functionBuilder.addToCFA(new BlankEdge("fall through", fileLocation1, trueNode,lastnode,"fall through"));
                         break;
                     }else {
-                        CFANode breakNode = functionBuilder.newCFANode();
-                        handleStatement(functionBuilder, (Statement) nextNode, trueNode, breakNode);
-                        trueNode = breakNode;
+                        CFANode nextCFANode = functionBuilder.newCFANode();
+                        handleStatement(functionBuilder, (Statement) nextNode, trueNode, nextCFANode);
+                        trueNode = nextCFANode;
                     }
                 }
             }
@@ -1553,12 +1551,12 @@ public class ChannelBuilder {
                 return MME;
             }else if(functionName.equals("ULNASEMMMessageTranslation"))
                 return UE;
-            else if(functionName.equals("DLNASMessageDeliver")){
+            else if(functionName.equals("DLASMessageDeliver")){
                 if(locationType==2)
                     return MME;
                 else
                     return UE;
-            }else if(functionName.equals("ULNASMessageDeliver"))
+            }else if(functionName.equals("ULASMessageDeliver"))
                 if(locationType==2)
                     return UE;
                 else

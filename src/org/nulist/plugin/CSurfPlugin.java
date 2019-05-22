@@ -74,6 +74,7 @@ public class CSurfPlugin {
         CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
         String cfafile = projPath+"/output/cfa.ser.gz";
         File file = new File(cfafile);
+//        cpaMain.ReadSearializedCFA(cfafile);
         if(file.exists())
             CPAMain.executeParser(arguments,cpacheckPath, projectPath, null);
         else

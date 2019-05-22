@@ -37,7 +37,7 @@ void rrc_enb_task_S1AP_DOWNLINK_NAS(uint16_t ue_initial_id, rnti_t rnti, uint32_
       struct rrc_eNB_ue_context_s *ue_context_p = NULL;
       ue_context_p = ENB_rrc_eNB_get_ue_context_from_s1ap_ids(instance, ue_initial_id, eNB_ue_s1ap_id);
       srb_id = ue_context_p->ue_context.Srb2.Srb_info.Srb_id;
-      if (ue_context_p->ue_context.eNB_ue_s1ap_id == 0) {
+      if(ue_context_p->ue_context.eNB_ue_s1ap_id == 0) {
             ue_context_p->ue_context.eNB_ue_s1ap_id = eNB_ue_s1ap_id;
        }
 

@@ -127,8 +127,16 @@ public class MutableCFA implements CFA {
     return Collections.unmodifiableNavigableMap(functions);
   }
 
+  public NavigableMap<String, FunctionEntryNode> getAllFunctionSet(){
+    return functions;
+  }
+
   public SortedSet<CFANode> getFunctionNodes(String pName) {
     return Collections.unmodifiableSortedSet(allNodes.get(pName));
+  }
+
+  public SortedSet<CFANode> getFunctionNodeSet(String pName) {
+    return allNodes.get(pName);
   }
 
   @Override

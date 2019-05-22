@@ -1,4 +1,4 @@
-cn_channel_message_t *CN_channel_message_cache= NULL;
+cn_channel_message_t *CN_channel_message_cache=NULL;
 
 void cnChannelMessageInit(){
     CN_channel_message_cache=ENB_malloc(sizeof(cn_channel_message_t));

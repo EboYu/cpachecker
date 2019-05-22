@@ -32,13 +32,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -71,13 +65,10 @@ import org.sosy_lab.cpachecker.cfa.export.CFAToPixelsWriter;
 import org.sosy_lab.cpachecker.cfa.export.DOTBuilder;
 import org.sosy_lab.cpachecker.cfa.export.DOTBuilder2;
 import org.sosy_lab.cpachecker.cfa.export.FunctionCallDumper;
-import org.sosy_lab.cpachecker.cfa.model.AStatementEdge;
-import org.sosy_lab.cpachecker.cfa.model.BlankEdge;
-import org.sosy_lab.cpachecker.cfa.model.CFAEdge;
-import org.sosy_lab.cpachecker.cfa.model.CFAEdgeType;
-import org.sosy_lab.cpachecker.cfa.model.CFANode;
-import org.sosy_lab.cpachecker.cfa.model.FunctionEntryNode;
+import org.sosy_lab.cpachecker.cfa.model.*;
 import org.sosy_lab.cpachecker.cfa.model.c.CDeclarationEdge;
+import org.sosy_lab.cpachecker.cfa.model.c.CFunctionEntryNode;
+import org.sosy_lab.cpachecker.cfa.model.c.CFunctionSummaryStatementEdge;
 import org.sosy_lab.cpachecker.cfa.model.java.JDeclarationEdge;
 import org.sosy_lab.cpachecker.cfa.parser.Parsers;
 import org.sosy_lab.cpachecker.cfa.postprocessing.function.CFADeclarationMover;
@@ -160,7 +151,7 @@ public class CFACreator {
         "Replace thread creation operations with a special function calls"
             + "so, any analysis can go through the function"
   )
-  private boolean enableThreadOperationsInstrumentation = true;
+  private boolean enableThreadOperationsInstrumentation = false;
 
   @Option(secure=true, name="analysis.useGlobalVars",
       description="add declarations for global variables before entry function")
@@ -172,11 +163,11 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.export",
       description="export CFA as .dot file")
-  private boolean exportCfa = false;
+  private boolean exportCfa = true;
 
   @Option(secure=true, name="cfa.exportPerFunction",
       description="export individual CFAs for function as .dot files")
-  private boolean exportCfaPerFunction = false;
+  private boolean exportCfaPerFunction = true;
 
   @Option(secure = true, name = "cfa.exportToC", description = "export CFA as C file")
   private boolean exportCfaToC = false;
@@ -187,7 +178,7 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.callgraph.export",
       description="dump a simple call graph")
-  private boolean exportFunctionCalls = false;
+  private boolean exportFunctionCalls = true;
 
   @Option(secure=true, name="cfa.callgraph.file",
       description="file name for call graph as .dot file")
@@ -252,7 +243,7 @@ public class CFACreator {
 
   @Option(secure=true, name="cfa.useFunctionCallUnwinding",
       description="unwind recursive functioncalls (bounded to max call stack size)")
-  private boolean useFunctionCallUnwinding = true;
+  private boolean useFunctionCallUnwinding = false;
 
   @Option(secure=true, name="cfa.useCFACloningForMultiThreadedPrograms",
       description="clone functions of the CFA, such that there are several "
@@ -270,7 +261,7 @@ public class CFACreator {
     name = "cfa.createDependenceGraph",
     description = "Whether to create dependence graph for the CFA of the program"
   )
-  private boolean createDependenceGraph = true;
+  private boolean createDependenceGraph = false;
 
   @Option(
       secure = true,
@@ -299,6 +290,8 @@ private boolean classifyNodes = false;
   private final LogManager logger;
   private final Parser parser;
   private final ShutdownNotifier shutdownNotifier;
+
+  private List<String> emptyFunctions = new ArrayList<>();
 
   private static class CFACreatorStatistics implements Statistics {
 
@@ -608,6 +601,8 @@ private boolean classifyNodes = false;
                                                 cfa, logger, shutdownNotifier,
                                                 config));
     }
+    //remove functions that will never be invoked
+    cfa = removeFunctionWithNoEntry(cfa);
 
     Optional<DependenceGraph> depGraph;
       if (createDependenceGraph) {
@@ -649,6 +644,48 @@ private boolean classifyNodes = false;
     logger.log(Level.FINE, "DONE, CFA for", immutableCFA.getNumberOfFunctions(), "functions created.");
 
     return immutableCFA;
+  }
+
+  private MutableCFA removeFunctionWithNoEntry(MutableCFA pCfa){
+    emptyFunctions = new ArrayList<>();
+    for(FunctionEntryNode node: pCfa.getAllFunctions().values()){
+      if(node.getNumEnteringEdges()==0 && !node.getFunctionName().equals("main")){
+        travserFunctionCall(pCfa,node,0);
+      }
+    }
+
+    Iterator<Map.Entry<String, FunctionEntryNode>> iterator = pCfa.getAllFunctionSet().entrySet().iterator();
+    while (iterator.hasNext()){
+      Map.Entry<String, FunctionEntryNode> entry = iterator.next();
+      if(emptyFunctions.contains(entry.getKey()))
+        iterator.remove();
+    }
+
+    return pCfa;
+  }
+
+  private MutableCFA travserFunctionCall(MutableCFA pCfa, FunctionEntryNode entryNode, int deep){
+    if(pCfa.getFunctionNodes(entryNode.getFunctionName())==null||pCfa.getFunctionNodes(entryNode.getFunctionName()).isEmpty())
+      return pCfa;
+    //System.out.println("Remove: "+deep+"::"+entryNode.getFunctionName()+" in " +entryNode.getFileLocation().toString());
+    deep++;
+    emptyFunctions.add(entryNode.getFunctionName());
+    Iterator<CFANode> nodeIterator = pCfa.getFunctionNodeSet(entryNode.getFunctionName()).iterator();
+    while (nodeIterator.hasNext()){
+      CFANode cfaNode = nodeIterator.next();
+      if(!(cfaNode instanceof FunctionExitNode))
+        for(int i=0;i<cfaNode.getNumLeavingEdges();i++){
+          if(cfaNode.getLeavingEdge(i).getSuccessor() instanceof FunctionEntryNode){
+            FunctionEntryNode calledEntry = (FunctionEntryNode)(cfaNode.getLeavingEdge(i).getSuccessor());
+            calledEntry.removeEnteringEdge(cfaNode.getLeavingEdge(i));
+            if(calledEntry.getNumEnteringEdges()==0){
+              travserFunctionCall(pCfa,calledEntry,deep);
+            }
+          }
+        }
+      nodeIterator.remove();
+    }
+    return pCfa;
   }
 
   private void instrumentCfa(MutableCFA pCfa) throws InvalidConfigurationException {
@@ -1047,7 +1084,7 @@ v.addInitializer(initializer);
     }
   }
 
-  private void exportCFAAsync(final CFA cfa) {
+  public void exportCFAAsync(final CFA cfa) {
     // Execute asynchronously, this may take several seconds for large programs on slow disks.
     // This is safe because we don't modify the CFA from this point on.
     Concurrency.newThread("CFA export thread", () -> exportCFA(cfa)).start();
