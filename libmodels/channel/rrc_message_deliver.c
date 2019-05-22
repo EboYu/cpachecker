@@ -11,12 +11,12 @@ void ENB_do_SIB23(){
 void ENB_do_RRCConnectionSetup(){
     cnPushPlainDLCCCHMessageIntoCache(*dl_ccch_msg);
 }
-void ENB_do_RRCConnectionSetup_BR(){
-    cnPushPlainDLCCCHMessageIntoCache(*dl_ccch_msg);
-}
-void ENB_do_RRCConnectionReconfiguration_BR(){
-    cnPushPlainDLDCCHMessageIntoCache(*dl_dcch_msg);
-}
+//void ENB_do_RRCConnectionSetup_BR(){
+//    cnPushPlainDLCCCHMessageIntoCache(*dl_ccch_msg);
+//}
+//void ENB_do_RRCConnectionReconfiguration_BR(){
+//    cnPushPlainDLDCCHMessageIntoCache(*dl_dcch_msg);
+//}
 void ENB_do_RRCConnectionReconfiguration(){
     cnPushPlainDLDCCHMessageIntoCache(*dl_dcch_msg);
 }

@@ -4,37 +4,41 @@
 //this function is used to translate message between UE and CN and deliver to eNB
 
 
-void ULNASMessageDeliver(MessagesIds messageID){
+void ULASMessageDeliver(MessagesIds messageID){
     switch(messageID){
         case 47://NAS_KENB_REFRESH_REQ = 47, no as message
         break;
         case 48://NAS_CELL_SELECTION_REQ = 48, as msg id = AS_CELL_INFO_REQ
         break;
         case 49://NAS_CONN_ESTABLI_REQ = 49, as msg id = AS_NAS_ESTABLISH_REQ
-            CN_channel_message_cache->nas_message.msgID = 27; //NAS_INITIAL_UE_MESSAGE
-            //first: translate nas_establish_req_t to nas_establish_ind_t (AS message)
-            CN_channel_message_cache->nas_message.as_message.msg_id = 27;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ue_id =0;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.tai.plmn = (plmn_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.plmnID;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.tai.tac = (tac_t) 1;//it is assigned by enb, in which tac is configuration by loaded config
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.plmn = (plmn_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.plmnID;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.cell_identity.enb_id = 0;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.cell_identity.cell_id = 0;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.s_tmsi.mme_code = (mme_code_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.s_tmsi.MMEcode;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.s_tmsi.m_tmsi = (tmsi_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.s_tmsi.m_tmsi;
-            CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.as_cause = (as_cause_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.cause;
-            //nas_proc_establish_ind
+        {
+                    CN_channel_message_cache->nas_message.msgID = 27; //NAS_INITIAL_UE_MESSAGE
+                    //first: translate nas_establish_req_t to nas_establish_ind_t (AS message)
+                    CN_channel_message_cache->nas_message.as_message.msg_id = 27;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ue_id =0;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.tai.plmn = (plmn_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.plmnID;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.tai.tac = (tac_t) 1;//it is assigned by enb, in which tac is configuration by loaded config
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.plmn = (plmn_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.plmnID;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.cell_identity.enb_id = 0;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.ecgi.cell_identity.cell_id = 0;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.s_tmsi.mme_code = (mme_code_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.s_tmsi.MMEcode;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.s_tmsi.m_tmsi = (tmsi_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.s_tmsi.m_tmsi;
+                    CN_channel_message_cache->nas_message.as_message.msg.nas_establish_ind.as_cause = (as_cause_t)UE_channel_message_cache->nas_message.as_message.msg.nas_establish_req.cause;
+                    //nas_proc_establish_ind
+        }
         break;
         case 50://NAS_UPLINK_DATA_REQ = 50, as msg id = AS_UL_INFO_TRANSFER_REQ
+            {
             CN_channel_message_cache->nas_message.msgID = 30;//NAS_UPLINK_DATA_IND = 30
             CN_channel_message_cache->nas_message.as_message.msg.ul_info_transfer_ind.ue_id =UE_channel_message_cache->nas_message.as_message.msg.ul_info_transfer_req.UEid;
             //nas_proc_ul_transfer_ind
+            }
         break;
         default:break;
     }
 }
 
-void DLNASMessageDeliver(MessagesIds messageID){
+void DLASMessageDeliver(MessagesIds messageID){
     switch(messageID){
         case 31://NAS_DOWNLINK_DATA_REQ = 31, as msg id =
         break;
@@ -60,103 +64,104 @@ void ULNASEMMMessageTranslation(){
     uint8_t headerType = UE_channel_message_cache->nas_message.nas_message.header.security_header_type;
     switch(msgType){
         case 65://ATTACH_REQUEST
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_ATTACH_REQUEST();
-            else
+            }else{
                 translate_UL_ATTACH_REQUEST_Security();
-            break;
+            }break;
         case 67://ATTACH_COMPLETE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_ATTACH_COMPLETE();
-            else
+            }else{
                 translate_UL_ATTACH_COMPLETE_Security();
-            break;
+            }break;
         case 69://DETACH_REQUEST, ue-sided detach request
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_DETACH_REQUEST();
-            else
+            }else{
                 translate_UL_DETACH_REQUEST_Security();
-            break;
+            }break;
         case 70://DETACH_ACCEPT, network-sided detach request
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_DETACH_ACCEPT();
-            else
+            }else{
                 translate_UL_DETACH_ACCEPT_Security();
-            break;
+            }break;
         case 72://TRACKING_AREA_UPDATE_REQUEST
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_TRACKING_AREA_UPDATE_REQUEST();
-            else
+            }else{
                 translate_UL_TRACKING_AREA_UPDATE_REQUEST_Security();
-            break;
+            }break;
         case 74://TRACKING_AREA_UPDATE_COMPLETE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_TRACKING_AREA_UPDATE_COMPLETE();
-            else
+            }else{
                 translate_UL_TRACKING_AREA_UPDATE_COMPLETE_Security();
-            break;
+            }break;
         case 76://EXTENDED_SERVICE_REQUEST
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_EXTENDED_SERVICE_REQUEST();
-            else
+            }else{
                 translate_UL_EXTENDED_SERVICE_REQUEST_Security();
-            break;
+            }break;
         case 77://SERVICE_REQUEST
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_SERVICE_REQUEST();
-            else
+            }else{
                 translate_UL_SERVICE_REQUEST_Security();
-            break;
+            }break;
         case 81://GUTI_REALLOCATION_COMPLETE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_GUTI_REALLOCATION_COMPLETE();
-            else
+            }else{
                 translate_UL_GUTI_REALLOCATION_COMPLETE_Security();
-            break;
+            }break;
         case 83://AUTHENTICATION_RESPONSE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_AUTHENTICATION_RESPONSE();
-            else
+            }else{
                 translate_UL_AUTHENTICATION_RESPONSE_Security();
-            break;
+            }break;
         case 92://AUTHENTICATION_FAILURE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_AUTHENTICATION_FAILURE();
-            else
+            }else{
                 translate_UL_AUTHENTICATION_FAILURE_Security();
-            break;
+            }break;
         case 86://IDENTITY_RESPONSE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_IDENTITY_RESPONSE();
-            else
+            }else{
                 translate_UL_IDENTITY_RESPONSE_Security();
-            break;
+            }break;
         case 94://SECURITY_MODE_COMPLETE
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_SECURITY_MODE_COMPLETE();
-            else
+            }else{
                 translate_UL_SECURITY_MODE_COMPLETE_Security();
-            break;
+            }break;
         case 95://SECURITY_MODE_REJECT
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_SECURITY_MODE_REJECT();
-            else
+            }else{
                 translate_UL_SECURITY_MODE_REJECT_Security();
-            break;
+            }break;
         case 96://EMM_STATUS, both
-            if(headerType==720896)
+            if(headerType==720896){{
                 translate_UL_EMM_STATUS();
-            else
-                translate_UL_EMM_STATUS_Security();
-            break;
+            }else{
+                translate_UL_EMM_STATUS_Security();}
+            }break;
         case 99://UPLINK_NAS_TRANSPORT
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_UL_UPLINK_NAS_TRANSPORT();
-            else
+            }else{
                 translate_UL_UPLINK_NAS_TRANSPORT_Security();
-            break;
+            }break;
         default:break;
     }
+    ueChannelMessageInit();
 }
 
 void DLNASEMMMessageTranslation(){
@@ -165,103 +170,108 @@ void DLNASEMMMessageTranslation(){
     uint8_t headerType = CN_channel_message_cache->nas_message.nas_message.header.security_header_type;
     switch(msgType){
         case 66://ATTACH_ACCEPT
-            if(headerType==720896)
+            if(headerType==720896){
                 translate_DL_ATTACH_ACCEPT();
-            else
+             }else{
                 translate_DL_ATTACH_ACCEPT_Security();
+            }
             break;
         case 68://ATTACH_REJECT
-            if(headerType==720896)
-                        translate_DL_ATTACH_REJECT();
-                    else
-                        translate_DL_ATTACH_REJECT_Security();
+            if(headerType==720896){
+                translate_DL_ATTACH_REJECT();
+            }else{
+                translate_DL_ATTACH_REJECT_Security();
+                }
             break;
         case 69://DETACH_REQUEST, network-sided detach request
-        if(headerType==720896)
-                        translate_DL_DETACH_REQUEST();
-                    else
-                        translate_DL_DETACH_REQUEST_Security();
+        if(headerType==720896){
+                translate_DL_DETACH_REQUEST();
+            }else{
+                translate_DL_DETACH_REQUEST_Security();
+            }
             break;
         case 70://DETACH_ACCEPT, ue-sided detach request
-        if(headerType==720896)
-                        translate_DL_DETACH_ACCEPT();
-                    else
-                        translate_DL_DETACH_ACCEPT_Security();
-            break;
+        if(headerType==720896){
+                translate_DL_DETACH_ACCEPT();
+            }else{
+                translate_DL_DETACH_ACCEPT_Security();
+            }break;
         case 73://TRACKING_AREA_UPDATE_ACCEPT
-        if(headerType==720896)
-                        translate_DL_TRACKING_AREA_UPDATE_ACCEPT();
-                    else
-                        translate_DL_TRACKING_AREA_UPDATE_ACCEPT_Security();
-                        break;
+        if(headerType==720896){
+                    translate_DL_TRACKING_AREA_UPDATE_ACCEPT();
+                }else{
+                    translate_DL_TRACKING_AREA_UPDATE_ACCEPT_Security();
+                        }break;
         case 75://TRACKING_AREA_UPDATE_REJECT
-        if(headerType==720896)
-                        translate_DL_TRACKING_AREA_UPDATE_REJECT();
-                    else
-                        translate_DL_TRACKING_AREA_UPDATE_REJECT_Security();
-            break;
+        if(headerType==720896){
+                    translate_DL_TRACKING_AREA_UPDATE_REJECT();
+                }else{
+                    translate_DL_TRACKING_AREA_UPDATE_REJECT_Security();
+            }break;
         case 78://SERVICE_REJECT
-        if(headerType==720896)
-                        translate_DL_SERVICE_REJECT();
-                    else
-                        translate_DL_SERVICE_REJECT_Security();
-            break;
+        if(headerType==720896){
+                    translate_DL_SERVICE_REJECT();
+                }else{
+                    translate_DL_SERVICE_REJECT_Security();
+            }break;
         case 88://GUTI_REALLOCATION_COMMAND
-        if(headerType==720896)
-                        translate_DL_GUTI_REALLOCATION_COMMAND();
-                    else
-                        translate_DL_GUTI_REALLOCATION_COMMAND_Security();
-            break;
+        if(headerType==720896){
+                    translate_DL_GUTI_REALLOCATION_COMMAND();
+                }else{
+                    translate_DL_GUTI_REALLOCATION_COMMAND_Security();
+            }break;
         case 82://AUTHENTICATION_REQUEST
-            if(headerType==720896)
-                        translate_DL_AUTHENTICATION_REQUEST();
-                    else
-                        translate_DL_AUTHENTICATION_REQUEST_Security();
-            break;
+            if(headerType==720896){
+                    translate_DL_AUTHENTICATION_REQUEST();
+                }else{
+                    translate_DL_AUTHENTICATION_REQUEST_Security();
+            }break;
         case 84://AUTHENTICATION_REJECT
-        if(headerType==720896)
-                        translate_DL_AUTHENTICATION_REJECT();
-                    else
-                        translate_DL_AUTHENTICATION_REJECT_Security();
-            break;
+        if(headerType==720896){
+                    translate_DL_AUTHENTICATION_REJECT();
+                }else{
+                    translate_DL_AUTHENTICATION_REJECT_Security();
+            }break;
         case 85://IDENTITY_REQUEST
-            if(headerType==720896)
-                        translate_DL_IDENTITY_REQUEST();
-                    else
-                        translate_DL_IDENTITY_REQUEST_Security();
-            break;
+            if(headerType==720896){
+                    translate_DL_IDENTITY_REQUEST();
+                }else{
+                    translate_DL_IDENTITY_REQUEST_Security();
+            }break;
         case 93://SECURITY_MODE_COMMAND
-            if(headerType==720896)
-                        translate_DL_SECURITY_MODE_COMMAND();
-                    else
-                        translate_DL_SECURITY_MODE_COMMAND_Security();
-            break;
+            if(headerType==720896){
+                    translate_DL_SECURITY_MODE_COMMAND();
+                }else{
+                    translate_DL_SECURITY_MODE_COMMAND_Security();
+            }break;
         case 96://EMM_STATUS, both
-        if(headerType==720896)
-                        translate_DL_EMM_STATUS();
-                    else
-                        translate_DL_EMM_STATUS_Security();
-            break;
+        if(headerType==720896){
+                translate_DL_EMM_STATUS();
+            }else{
+                translate_DL_EMM_STATUS_Security();
+            }break;
         case 97://EMM_INFORMATION
-            if(headerType==720896)
-                        translate_DL_EMM_INFORMATION();
-                    else
-                        translate_DL_EMM_INFORMATION_Security();
-            break;
+            if(headerType==720896){
+                translate_DL_EMM_INFORMATION();
+            }else{
+                translate_DL_EMM_INFORMATION_Security();
+            }break;
         case 98://DOWNLINK_NAS_TRANSPORT
-        if(headerType==720896)
-                        translate_DL_DOWNLINK_NAS_TRANSPORT();
-                    else
-                        translate_DL_DOWNLINK_NAS_TRANSPORT_Security();
+        if(headerType==720896){
+            translate_DL_DOWNLINK_NAS_TRANSPORT();
+        } else{
+            translate_DL_DOWNLINK_NAS_TRANSPORT_Security();
+        }
             break;
         case 100://CS_SERVICE_NOTIFICATION
-        if(headerType==720896)
-                        translate_DL_CS_SERVICE_NOTIFICATION();
-                    else
-                        translate_DL_CS_SERVICE_NOTIFICATION_Security();
-            break;
+        if(headerType==720896){
+            translate_DL_CS_SERVICE_NOTIFICATION();
+        }else{
+            translate_DL_CS_SERVICE_NOTIFICATION_Security();
+            }break;
         default:break;
     }
+    cnChannelMessageInit();
 }
 
 void ULDCCHRRCMessageDeliver(){

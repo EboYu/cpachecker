@@ -142,7 +142,7 @@ public class CPAMain {
     try {
       CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
       CFA cfa = cfaCreator.readSerializedCFA(cfafile);
-
+      cfaCreator.exportCFAAsync(cfa);
     }catch (Exception e){
       e.printStackTrace();
     }

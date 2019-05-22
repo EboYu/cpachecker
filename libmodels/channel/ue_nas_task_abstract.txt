@@ -27,10 +27,12 @@ void nas_ue_NAS_CONN_RELEASE_IND(nas_user_t *user, int cause){
 }
 
 void nas_ue_NAS_UPLINK_DATA_CNF(nas_user_t *user,nas_error_code_t errCode){
-    if(errCode==1)
+    if(errCode==1){
         nas_proc_ul_transfer_cnf(user);
-    else
+        }
+    else{
         nas_proc_ul_transfer_rej (user);
+        }
 }
 
 void nas_ue_NAS_DOWNLINK_DATA_IND(nas_user_t *user, int cause){
