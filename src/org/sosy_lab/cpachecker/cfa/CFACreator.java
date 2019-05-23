@@ -569,6 +569,9 @@ private boolean classifyNodes = false;
       spbuilder.insertCallEdgesRecursively();
     }
 
+    //remove functions that will never be invoked
+//    cfa = removeFunctionWithNoEntry(cfa);
+
     //exportCFAAsync(cfa);
     // FIFTH, do post-processings on the supergraph
     // Mutating post-processings should be checked carefully for their effect
@@ -601,8 +604,7 @@ private boolean classifyNodes = false;
                                                 cfa, logger, shutdownNotifier,
                                                 config));
     }
-    //remove functions that will never be invoked
-    cfa = removeFunctionWithNoEntry(cfa);
+
 
     Optional<DependenceGraph> depGraph;
       if (createDependenceGraph) {
@@ -655,10 +657,22 @@ private boolean classifyNodes = false;
     }
 
     Iterator<Map.Entry<String, FunctionEntryNode>> iterator = pCfa.getAllFunctionSet().entrySet().iterator();
+
     while (iterator.hasNext()){
       Map.Entry<String, FunctionEntryNode> entry = iterator.next();
-      if(emptyFunctions.contains(entry.getKey()))
+      if(emptyFunctions.contains(entry.getKey())){
+        String functionName = entry.getKey();
+        if(functionName.startsWith("UE_"))
+          functionName = functionName.replace("UE_","");
+        else if(functionName.startsWith("ENB_"))
+          functionName = functionName.replace("ENB_","");
+        else functionName = functionName.replace("MME_","");
+        System.out.println("funcName.equals(\""+functionName+"\")||");
+//        if(!pCfa.getLoopStructure().get().getLoopsForFunction(entry.getKey()).isEmpty())
+//            System.out.println("There are loop structures in "+entry.getKey());
+//        removeAll(pCfa.getLoopStructure().get().getLoopsForFunction(entry.getKey()));
         iterator.remove();
+      }
     }
 
     return pCfa;
@@ -813,13 +827,13 @@ private boolean classifyNodes = false;
       cfa = fca.unwindRecursion();
     }
 
-//    if (useCFACloningForMultiThreadedPrograms && isMultiThreadedProgram(cfa)) {
-//      // cloning must be done before adding global vars,
-//      // current use case is ThreadingCPA, thus we check for the creation of new threads first.
-//      logger.log(Level.INFO, "program contains concurrency, cloning functions...");
-//      final CFACloner cloner = new CFACloner(cfa, config);
-//      cfa = cloner.execute();
-//    }
+    if (useCFACloningForMultiThreadedPrograms && isMultiThreadedProgram(cfa)) {
+      // cloning must be done before adding global vars,
+      // current use case is ThreadingCPA, thus we check for the creation of new threads first.
+      logger.log(Level.INFO, "program contains concurrency, cloning functions...");
+      final CFACloner cloner = new CFACloner(cfa, config);
+      cfa = cloner.execute();
+    }
 
     if (useGlobalVars) {
       // add global variables at the beginning of main
@@ -1066,7 +1080,7 @@ private boolean classifyNodes = false;
           if (!(type instanceof CElaboratedType)
               || (((CElaboratedType)type).getKind() == ComplexTypeKind.ENUM)) {
             CInitializer initializer = CDefaults.forType(type, v.getFileLocation());
-v.addInitializer(initializer);
+            v.addInitializer(initializer);
             v = new CVariableDeclaration(v.getFileLocation(),
                                          v.isGlobal(),
                                          v.getCStorageClass(),

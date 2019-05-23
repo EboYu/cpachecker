@@ -148,7 +148,7 @@ public class CPAMain {
     }
   }
 
-  public void CFACombination(Map<String, CFABuilder> builderMap){
+  public void CFACombination(Map<String, CFABuilder> builderMap, String programPath, boolean docheck){
     NavigableMap<String, FunctionEntryNode> pFunctions = new TreeMap<>();
     SortedSetMultimap<String, CFANode> pCfaNodes = TreeMultimap.create();
     List<Pair<ADeclaration, String>> pGlobalDeclarations = new ArrayList<>();
@@ -168,11 +168,84 @@ public class CPAMain {
       ParseResult result = new ParseResult(pFunctions,pCfaNodes,pGlobalDeclarations,pFileNames);
       FunctionEntryNode main = result.getFunctions().get("main");
       CFACreator cfaCreator = new CFACreator(cpaConfig, logManager, shutdownNotifier);
-      cfaCreator.createCFA(result,main);
+      CFA cfa = cfaCreator.createCFA(result,main);
+      if(docheck)
+        performModelChecking(cfa, programPath);
     }catch (Exception e){
       e.printStackTrace();
     }
+  }
 
+  private void performModelChecking(CFA inputCFA,String programPath){
+    final ShutdownManager shutdownManager = ShutdownManager.create();
+    final ShutdownNotifier shutdownNotifier = shutdownManager.getNotifier();
+    CPAchecker cpachecker = null;
+    ProofGenerator proofGenerator = null;
+    ResourceLimitChecker limits = null;
+    ReportGenerator reportGenerator = null;
+    MainOptions options = new MainOptions();
+
+    try {
+      cpaConfig.inject(options);
+
+      dumpConfiguration(options, cpaConfig, logManager);
+
+      ConfigurationBuilder configBuilder = Configuration.builder();
+      configBuilder.copyFrom(cpaConfig);
+      configBuilder.setOption("language", "C");
+      cpaConfig = configBuilder.build();
+
+      limits = ResourceLimitChecker.fromConfiguration(cpaConfig, logManager, shutdownManager);
+      limits.start();
+
+      cpachecker = new CPAchecker(cpaConfig, logManager, shutdownManager);
+      if (options.doPCC) {
+        proofGenerator = new ProofGenerator(cpaConfig, logManager, shutdownNotifier);
+      }
+      reportGenerator =
+              new ReportGenerator(cpaConfig, logManager, logOptions.getOutputFile(), options.programs);
+      reportGenerator.setProgramName(programPath);
+    } catch (InvalidConfigurationException e) {
+      logManager.logUserException(Level.SEVERE, e, "Invalid configuration");
+      System.exit(ERROR_EXIT_CODE);
+      return;
+    }
+
+    // This is for shutting down when Ctrl+C is caught.
+    ShutdownHook shutdownHook = new ShutdownHook(shutdownManager);
+    Runtime.getRuntime().addShutdownHook(shutdownHook);
+
+    // This is for actually forcing a termination when CPAchecker
+    // fails to shutdown within some time.
+    ShutdownRequestListener forcedExitOnShutdown =
+            ForceTerminationOnShutdown.createShutdownListener(logManager, shutdownHook);
+    shutdownNotifier.register(forcedExitOnShutdown);
+
+    // run analysis
+    CPAcheckerResult result = cpachecker.run(inputCFA,properties);
+
+    // generated proof (if enabled)
+    if (proofGenerator != null) {
+      proofGenerator.generateProof(result);
+    }
+
+    // We want to print the statistics completely now that we have come so far,
+    // so we disable all the limits, shutdown hooks, etc.
+    shutdownHook.disable();
+    shutdownNotifier.unregister(forcedExitOnShutdown);
+    ForceTerminationOnShutdown.cancelPendingTermination();
+    limits.cancel();
+    Thread.interrupted(); // clear interrupted flag
+
+    try {
+      printResultAndStatistics(result, outputDirectory, options, reportGenerator, logManager);
+    } catch (IOException e) {
+      logManager.logUserException(Level.WARNING, e, "Could not write statistics to file");
+    }
+
+    System.out.flush();
+    System.err.flush();
+    logManager.flush();
   }
 
 
@@ -338,9 +411,6 @@ public class CPAMain {
     System.out.flush();
     System.err.flush();
     logManager.flush();
-
-
-
   }
 
   @SuppressWarnings("resource") // We don't close LogManager

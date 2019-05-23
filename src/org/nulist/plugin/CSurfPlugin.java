@@ -70,6 +70,7 @@ public class CSurfPlugin {
             }else
                 throw new RuntimeException("Please input arguments");
             readCFGFiles(arguments,projectPath,true);
+            //readSerializedCFA(arguments, projectPath);
         } else{
             arguments = new String[args.length-2];
             System.arraycopy(args,2,arguments,0,arguments.length);
@@ -161,10 +162,9 @@ public class CSurfPlugin {
             }
             printINFO("==================Finish Message Channel Model==================");
 
-            cpaMain.CFACombination(builderMap);
+            cpaMain.CFACombination(builderMap, projectPath, doCheck);
 
             printINFO("==================CSURF_PLUGIN_END==================");
-
 
         }catch(result r){
             System.out.println("Uncaught exception: " + r);

@@ -606,6 +606,126 @@ public class CPAchecker {
     return new CPAcheckerResult(result, violatedPropertyDescription, reached, cfa, stats);
   }
 
+  public CPAcheckerResult run(CFA inputCFA, Set<SpecificationProperty> properties) {
+
+
+    logger.logf(Level.INFO, "%s (%s) started", getVersion(config), getJavaInformation());
+
+    MainCPAStatistics stats = null;
+    Algorithm algorithm = null;
+    ReachedSet reached = null;
+    CFA cfa = inputCFA;
+    Result result = Result.NOT_YET_STARTED;
+    String violatedPropertyDescription = "";
+
+    final ShutdownRequestListener interruptThreadOnShutdown = interruptCurrentThreadOnShutdown();
+    shutdownNotifier.register(interruptThreadOnShutdown);
+
+    try {
+      stats = new MainCPAStatistics(config, logger, shutdownNotifier);
+
+      // create reached set, cpa, algorithm
+      stats.creationTime.start();
+      reached = factory.createReachedSet();
+      //get cfa
+      stats.setCFA(inputCFA);
+
+      GlobalInfo.getInstance().storeCFA(cfa);
+      shutdownNotifier.shutdownIfNecessary();
+
+      ConfigurableProgramAnalysis cpa;
+      Specification specification;
+      stats.cpaCreationTime.start();
+      try {
+        specification =
+                Specification.fromFiles(properties, specificationFiles, cfa, config, logger);
+        cpa = factory.createCPA(cfa, specification);
+      } finally {
+        stats.cpaCreationTime.stop();
+      }
+      stats.setCPA(cpa);
+
+      if (cpa instanceof StatisticsProvider) {
+        ((StatisticsProvider) cpa).collectStatistics(stats.getSubStatistics());
+      }
+
+      GlobalInfo.getInstance().setUpInfoFromCPA(cpa);
+
+      algorithm = factory.createAlgorithm(cpa, cfa, specification);
+
+      if (algorithm instanceof MPVAlgorithm && !stopAfterError) {
+        // sanity check
+        throw new InvalidConfigurationException(
+                "Cannot use option 'analysis.stopAfterError' along with "
+                        + "multi-property verification algorithm. "
+                        + "Please use option 'mpv.findAllViolations' instead");
+      }
+
+      if (algorithm instanceof StatisticsProvider) {
+        ((StatisticsProvider) algorithm).collectStatistics(stats.getSubStatistics());
+      }
+
+      if (algorithm instanceof ImpactAlgorithm) {
+        ImpactAlgorithm mcmillan = (ImpactAlgorithm) algorithm;
+        reached.add(
+                mcmillan.getInitialState(cfa.getMainFunction()),
+                mcmillan.getInitialPrecision(cfa.getMainFunction()));
+      } else {
+        initializeReachedSet(reached, cpa, properties, cfa.getMainFunction(), cfa);
+      }
+
+      printConfigurationWarnings();
+
+      stats.creationTime.stop();
+      shutdownNotifier.shutdownIfNecessary();
+
+      // now everything necessary has been instantiated: run analysis
+
+      result = Result.UNKNOWN; // set to unknown so that the result is correct in case of exception
+
+      AlgorithmStatus status = runAlgorithm(algorithm, reached, stats);
+
+      if (status.wasPropertyChecked()) {
+        stats.resultAnalysisTime.start();
+        Collection<Property> violatedProperties = reached.getViolatedProperties();
+        if (!violatedProperties.isEmpty()) {
+          violatedPropertyDescription = Joiner.on(", ").join(violatedProperties);
+
+          if (!status.isPrecise()) {
+            result = Result.UNKNOWN;
+          } else {
+            result = Result.FALSE;
+          }
+        } else {
+          result = analyzeResult(reached, status.isSound());
+          if (unknownAsTrue && result == Result.UNKNOWN) {
+            result = Result.TRUE;
+          }
+        }
+        stats.resultAnalysisTime.stop();
+      } else {
+        result = Result.DONE;
+      }
+
+    }catch (InvalidConfigurationException e) {
+      logger.logUserException(Level.SEVERE, e, "Invalid configuration");
+
+    } catch (InterruptedException e) {
+      // CPAchecker must exit because it was asked to
+      // we return normally instead of propagating the exception
+      // so we can return the partial result we have so far
+      logger.logUserException(Level.WARNING, e, "Analysis interrupted");
+
+    } catch (CPAException e) {
+      logger.logUserException(Level.SEVERE, e, null);
+
+    } finally {
+      CPAs.closeIfPossible(algorithm, logger);
+      shutdownNotifier.unregister(interruptThreadOnShutdown);
+    }
+    return new CPAcheckerResult(result, violatedPropertyDescription, reached, cfa, stats);
+  }
+
   public CPAcheckerResult run(
           project project, Set<SpecificationProperty> properties) {
 
