@@ -310,6 +310,8 @@ public class CFABuilder implements Serializable {
                 funcName.equals("rrc_ue_task")||
                 funcName.equals("nas_ue_task")||
                 funcName.equals("rrc_enb_task")||
+                funcName.equals("L1_thread")||
+                funcName.equals("L1_thread_tx")||
                 funcName.equals("rrc_enb_process_itti_msg")||
                 funcName.equals("s1ap_eNB_process_itti_msg")||
                 funcName.equals("s1ap_eNB_task")||

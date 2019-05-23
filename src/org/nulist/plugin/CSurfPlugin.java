@@ -24,6 +24,7 @@ import java.lang.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -54,37 +55,46 @@ public class CSurfPlugin {
 
         //Arguments to CPAChecker
         String[] arguments = null;
-        String cpacheckPath ="";
-        String projectPath = "";
-        if(args.length>=3){
-            cpacheckPath = args[0];
-            projectPath = args[1];
-            arguments = args[2].split(" ");
+
+        String projectPath = args[1];
+
+        if(args[0].equals("csurf")){
+            if(args.length>=3){
+                arguments = args[2].split(" ");
+            }else
+                throw new RuntimeException("Please input arguments");
+            readCFGFiles(arguments,projectPath, false); //read cfg files and translate them into cfa
+        }else if(args[0].equals("csurfcheck")){
+            if(args.length>=3){
+                arguments = args[2].split(" ");
+            }else
+                throw new RuntimeException("Please input arguments");
+            readCFGFiles(arguments,projectPath,true);
+        } else{
+            arguments = new String[args.length-2];
+            System.arraycopy(args,2,arguments,0,arguments.length);
+            System.out.println(Arrays.toString(arguments));
+            readSerializedCFA(arguments, projectPath); //read serialized cfa and perform model checking
         }
-
-        //read serialized cfa and perform model checking
-//        readSerializedCFA(arguments,cpacheckPath, projectPath);
-        //read cfg files and translate them into cfa
-        readCFGFiles(arguments,cpacheckPath,projectPath);
-
     }
 
-    public static void readSerializedCFA(String[] arguments, String cpacheckPath,String projectPath){
+
+    public static void readSerializedCFA(String[] arguments, String projectPath){
         String projPath = System.getProperty("user.dir");
-        CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
+
         String cfafile = projPath+"/output/cfa.ser.gz";
         File file = new File(cfafile);
 //        cpaMain.ReadSearializedCFA(cfafile);
         if(file.exists())
-            CPAMain.executeParser(arguments,cpacheckPath, projectPath, null);
+            CPAMain.executeParser(arguments, projectPath);
         else
             printWARNING("There is no cfa.ser.gz in "+cfafile);
     }
 
-    public static void readCFGFiles(String[] arguments, String cpacheckPath, String projectPath){
+    public static void readCFGFiles(String[] arguments, String projectPath, boolean doCheck){
         try{
             String projPath = System.getProperty("user.dir");
-            CPAMain cpaMain = new CPAMain(arguments, cpacheckPath);
+            CPAMain cpaMain = new CPAMain(arguments);
             CFGParser cfgParser = new CFGParser(cpaMain.logManager, MachineModel.LINUX64);
             Map<String, CFABuilder> builderMap = new HashMap<>();
 
@@ -154,6 +164,8 @@ public class CSurfPlugin {
             cpaMain.CFACombination(builderMap);
 
             printINFO("==================CSURF_PLUGIN_END==================");
+
+
         }catch(result r){
             System.out.println("Uncaught exception: " + r);
         }

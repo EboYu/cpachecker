@@ -195,7 +195,7 @@ public class CFACreator {
     name = "cfa.serialize",
     description = "export CFA as .ser file (dump Java objects)"
   )
-  private boolean serializeCfa = false;
+  private boolean serializeCfa = true;
 
   @Option(
     secure = true,
@@ -667,7 +667,7 @@ private boolean classifyNodes = false;
   private MutableCFA travserFunctionCall(MutableCFA pCfa, FunctionEntryNode entryNode, int deep){
     if(pCfa.getFunctionNodes(entryNode.getFunctionName())==null||pCfa.getFunctionNodes(entryNode.getFunctionName()).isEmpty())
       return pCfa;
-    //System.out.println("Remove: "+deep+"::"+entryNode.getFunctionName()+" in " +entryNode.getFileLocation().toString());
+    System.out.println("Remove: "+deep+"::"+entryNode.getFunctionName()+" in " +entryNode.getFileLocation().toString());
     deep++;
     emptyFunctions.add(entryNode.getFunctionName());
     Iterator<CFANode> nodeIterator = pCfa.getFunctionNodeSet(entryNode.getFunctionName()).iterator();

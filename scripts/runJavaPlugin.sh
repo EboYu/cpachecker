@@ -3,7 +3,6 @@
 ###Compile###
 #ant
 
-
 ###Run####
 
 # the location of the java command
@@ -63,10 +62,8 @@ elif [ -n "$TMP" ]; then
   JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$TMP"
 fi
 
-
 # read input parameters
 declare -a OPTIONS
-
 
 until [ -z "$1" ]
   do
@@ -77,6 +74,12 @@ until [ -z "$1" ]
         -stack)
             JAVA_STACK_SIZE=$2
             shift 2;;
+        -csurf)
+            docheck="csurf"
+            shift;;
+        -csurfcheck)
+            docheck="csurfcheck"
+            shift;;
         -D | --debug)
             JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
             shift;;
@@ -89,9 +92,9 @@ until [ -z "$1" ]
         -C | --clean)
             rm -rf $PATH_TO_CPACHECKER/.output
             shift;;
-	*)# other params are only for CPAchecker
-       OPTIONS+=($1)
-       shift;;
+	     *)# other params are only for CPAchecker
+            OPTIONS+=($1)
+            shift;;
    esac
   done
 
@@ -163,10 +166,9 @@ JVMPATH="$JVMPATH/jre/lib/amd64/server/libjvm.so"
 
 sed "2c \    \"${CLASSPATH}\"" -i scripts/csurfJava_plugin.stk
 sed "4c \    \"${JVMPATH}\"" -i scripts/csurfJava_plugin.stk
-sed "5c \    \"${PATH_TO_CPACHECKER}\"" -i scripts/csurfJava_plugin.stk
+sed "5c \    \"${docheck}\"" -i scripts/csurfJava_plugin.stk
 sed "6c \    \"${PROJECT}\"" -i scripts/csurfJava_plugin.stk
 sed "7c \    \"${CPACHECKER_ARGUMENTS}\"" -i scripts/csurfJava_plugin.stk
-
 
 # Perform the plugin
 csurf -nogui -l $CODESURFER_STK

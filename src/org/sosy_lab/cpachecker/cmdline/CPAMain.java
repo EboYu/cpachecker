@@ -109,8 +109,8 @@ public class CPAMain {
   public Map<String, CFGParser> parserMap = new HashMap<>();
 
 
-  public CPAMain(String[] args, String cpacheckerPath){
-    systemPath = cpacheckerPath;
+  public CPAMain(String[] args){
+    //systemPath = cpacheckerPath;
     Locale.setDefault(Locale.US);
 
     // initialize various components
@@ -238,8 +238,7 @@ public class CPAMain {
    * @Param [args, cpacheckerPath, programPath, target]
    * @return void
    **/
-  public static void executeParser(String[] args, String cpacheckerPath, String programPath, project target){
-    systemPath = cpacheckerPath;
+  public static void executeParser(String[] args, String programPath){
     Locale.setDefault(Locale.US);
 
     // initialize various components
@@ -315,7 +314,7 @@ public class CPAMain {
     shutdownNotifier.register(forcedExitOnShutdown);
 
     // run analysis
-    CPAcheckerResult result = cpachecker.run(target, properties);
+    CPAcheckerResult result = cpachecker.run(properties);
 
     // generated proof (if enabled)
     if (proofGenerator != null) {
@@ -575,7 +574,10 @@ public class CPAMain {
     configBuilder.setOptions(EXTERN_OPTION_DEFAULTS);
     if (configFile != null) {
       configBuilder.setOption(APPROACH_NAME_OPTION, extractApproachNameFromConfigName(configFile));
-      configBuilder.loadFromFile(systemPath+"/"+configFile);
+      if(systemPath.equals(""))
+        configBuilder.loadFromFile(configFile);
+      else
+        configBuilder.loadFromFile(systemPath+"/"+configFile);
     }
     configBuilder.setOptions(cmdLineOptions);
 

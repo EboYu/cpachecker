@@ -168,6 +168,8 @@ public final class LoopStructure implements Serializable {
       newOutgoingEdges.removeAll(innerLoopEdges);
       newOutgoingEdges.removeIf(e -> e.getEdgeType().equals(CFAEdgeType.FunctionCallEdge));
 
+//      if(newIncomingEdges.isEmpty())
+//        System.out.println("newincomingedges is empty");
       assert !newIncomingEdges.isEmpty() : "Unreachable loop?";
 
       this.incomingEdges = ImmutableSet.copyOf(newIncomingEdges);

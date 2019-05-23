@@ -58,44 +58,54 @@ fi
 
 export CLASSPATH="$CLASSPATH:$PATH_TO_CPACHECKER/bin:$PATH_TO_CPACHECKER/cpachecker.jar:$PATH_TO_CPACHECKER/lib/*:$PATH_TO_CPACHECKER/lib/java/runtime/*"
 
+echo $*
 # loop over all input parameters and parse them
 declare -a OPTIONS
 JAVA_ASSERTIONS=-ea
-while [ $# -gt 0 ]; do
 
-  case $1 in
-   "-benchmark")
-       JAVA_ASSERTIONS=-da
-       unset DEFAULT_HEAP_SIZE  # no default heap size in benchmark mode
-       OPTIONS+=("$1")          # pass param to CPAchecker, too
-       ;;
-   "-heap")
-       shift
-       JAVA_HEAP_SIZE=$1
-       ;;
-   "-stack")
-       shift
-       JAVA_STACK_SIZE=$1
-       ;;
-   "-debug")
-       JAVA_VM_ARGUMENTS="$JAVA_VM_ARGUMENTS -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=5005,suspend=n"
-       ;;
-   "-disable-java-assertions")
-       JAVA_ASSERTIONS=-da
-       ;;
-   "-generateReport")
-       echo "Option -generateReport is not necessary anymore. Please open the HTML files produced by CPAchecker in the output directory."
-       ;;
-   -X*) # params starting with "-X" are used for JVM
-       JAVA_VM_ARGUMENTS="$JAVA_VM_ARGUMENTS $1"
-       ;;
-   *) # other params are only for CPAchecker
-       OPTIONS+=("$1")
-       ;;
-  esac
-
-  shift
-done
+until [ -z "$1" ]
+  do
+    case "$1" in
+        -heap)
+            JAVA_HEAP_SIZE=$2
+            shift 2;;
+        -stack)
+            JAVA_STACK_SIZE=$2
+            shift 2;;
+        -benchmark)
+            JAVA_ASSERTIONS=-da
+            unset DEFAULT_HEAP_SIZE  # no default heap size in benchmark mode
+            OPTIONS+=($1)          # pass param to CPAchecker, too
+            ;;
+        -disable-java-assertions)
+            JAVA_ASSERTIONS=-da
+            ;;
+        -generateReport)
+            echo "Option -generateReport is not necessary anymore. Please open the HTML files produced by CPAchecker in the output directory."
+            ;;
+        -load)
+            OPTIONS+=("load")
+            shift;;
+        -D)
+            JAVA_VM_ARGUMENTS="$JAVA_VM_ARGUMENTS -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+            shift;;
+        -B)
+            ant
+            shift;;
+        -P)
+            OPTIONS+=($2)
+            shift 2;;
+        -C | --clean)
+            rm -rf $PATH_TO_CPACHECKER/.output
+            shift;;
+        -X*) # params starting with "-X" are used for JVM
+            JAVA_VM_ARGUMENTS="$JAVA_VM_ARGUMENTS $1"
+            ;;
+	    *)# other params are only for CPAchecker
+            OPTIONS+=($1)
+            shift;;
+   esac
+  done
 
 if [ -n "$TMPDIR" ]; then
   JAVA_VM_ARGUMENTS="$JAVA_VM_ARGUMENTS -Djava.io.tmpdir=$TMPDIR"
@@ -154,6 +164,6 @@ exec "$JAVA" \
     -Xss${JAVA_STACK_SIZE} \
     -Xmx${JAVA_HEAP_SIZE} \
     $JAVA_ASSERTIONS \
-    org.sosy_lab.cpachecker.cmdline.CPAMain \
+    org.nulist.plugin.CSurfPlugin \
     "${OPTIONS[@]}" \
     $CPACHECKER_ARGUMENTS
