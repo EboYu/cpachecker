@@ -27,7 +27,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,7 +47,6 @@ import org.sosy_lab.common.configuration.Options;
 import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.cpachecker.util.Triple;
 import org.sosy_lab.cpachecker.util.predicates.regions.Region;
-import org.sosy_lab.cpachecker.util.predicates.regions.RegionCreator;
 import org.sosy_lab.cpachecker.util.predicates.regions.RegionManager;
 import org.sosy_lab.cpachecker.util.predicates.regions.SymbolicRegionManager;
 import org.sosy_lab.cpachecker.util.predicates.smt.BooleanFormulaManagerView;
@@ -70,11 +68,11 @@ public final class AbstractionManager {
   private final FormulaManagerView fmgr;
   private final Solver solver;
   // Here we keep the mapping abstract predicate variable -> predicate
-  private final Map<Region, AbstractionPredicate> absVarToPredicate = Maps.newHashMap();
+  private final Map<Region, AbstractionPredicate> absVarToPredicate = new HashMap<>();
   // and the mapping symbolic variable -> predicate
-  private final Map<BooleanFormula, AbstractionPredicate> symbVarToPredicate = Maps.newHashMap();
+  private final Map<BooleanFormula, AbstractionPredicate> symbVarToPredicate = new HashMap<>();
   // and the mapping atom -> predicate
-  private final Map<BooleanFormula, AbstractionPredicate> atomToPredicate = Maps.newHashMap();
+  private final Map<BooleanFormula, AbstractionPredicate> atomToPredicate = new HashMap<>();
 
   // Properties for BDD variable ordering:
   @Option(secure = true, name = "abs.predicateOrdering.method",
@@ -486,7 +484,7 @@ public final class AbstractionManager {
         });
   }
 
-  public RegionCreator getRegionCreator() {
+  public RegionManager getRegionCreator() {
     return rmgr;
   }
 

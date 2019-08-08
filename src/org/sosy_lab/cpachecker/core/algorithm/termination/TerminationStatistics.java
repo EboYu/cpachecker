@@ -38,8 +38,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
@@ -68,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -100,8 +99,8 @@ import org.sosy_lab.cpachecker.cfa.types.c.CType;
 import org.sosy_lab.cpachecker.core.AnalysisDirection;
 import org.sosy_lab.cpachecker.core.CPAcheckerResult.Result;
 import org.sosy_lab.cpachecker.core.Specification;
+import org.sosy_lab.cpachecker.core.algorithm.termination.lasso_analysis.LassoAnalysisStatistics;
 import org.sosy_lab.cpachecker.core.counterexample.CounterexampleInfo;
-import org.sosy_lab.cpachecker.core.interfaces.Statistics;
 import org.sosy_lab.cpachecker.core.reachedset.UnmodifiableReachedSet;
 import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.arg.path.ARGPath;
@@ -120,7 +119,7 @@ import org.sosy_lab.cpachecker.util.expressions.LeafExpression;
 import org.sosy_lab.cpachecker.util.states.MemoryLocation;
 
 @Options(prefix = "termination")
-public class TerminationStatistics implements Statistics {
+public class TerminationStatistics extends LassoAnalysisStatistics {
 
   @Option(
     secure = true,
@@ -151,30 +150,7 @@ public class TerminationStatistics implements Statistics {
 
   private final Timer safetyAnalysisTime = new Timer();
 
-  private final Timer lassoTime = new Timer();
-
-  private final Timer lassoConstructionTime = new Timer();
-
-  private final Timer lassoStemLoopConstructionTime = new Timer();
-
-  private final Timer lassosCreationTime = new Timer();
-
-  private final Timer lassoNonTerminationTime = new Timer();
-
-  private final Timer lassoTerminationTime = new Timer();
-
-  private final Map<Loop, AtomicInteger> safetyAnalysisRunsPerLoop = Maps.newConcurrentMap();
-
-  private final Map<Loop, AtomicInteger> lassosPerLoop = Maps.newConcurrentMap();
-
-  private final AtomicInteger maxLassosPerIteration = new AtomicInteger();
-
-  private final AtomicInteger lassosCurrentIteration = new AtomicInteger();
-
-  private final Multimap<Loop, TerminationArgument> terminationArguments =
-      MultimapBuilder.linkedHashKeys().arrayListValues().build();
-
-  private final Map<Loop, NonTerminationArgument> nonTerminationArguments = Maps.newConcurrentMap();
+  private final Map<Loop, AtomicInteger> safetyAnalysisRunsPerLoop = new ConcurrentHashMap<>();
 
   private final LogManager logger;
 
@@ -251,71 +227,10 @@ public class TerminationStatistics implements Statistics {
     nonterminatingLoop = pLoop;
   }
 
-  public void analysisOfLassosStarted() {
-    lassoTime.start();
-  }
-
-  public void analysisOfLassosFinished() {
-    lassoTime.stop();
-    lassoConstructionTime.stopIfRunning();
-    lassoNonTerminationTime.stopIfRunning();
-    lassoTerminationTime.stopIfRunning();
-    maxLassosPerIteration.accumulateAndGet(lassosCurrentIteration.getAndSet(0), Math::max);
-  }
-
-  public void lassoConstructionStarted() {
-    lassoConstructionTime.start();
-  }
-
-  public void lassoConstructionFinished() {
-    lassoConstructionTime.stop();
-  }
-
-  public void stemAndLoopConstructionStarted() {
-    lassoStemLoopConstructionTime.start();
-  }
-
-  public void stemAndLoopConstructionFinished() {
-    lassoStemLoopConstructionTime.stop();
-  }
-
-  public void lassosCreationStarted() {
-    lassosCreationTime.start();
-  }
-
-  public void lassosCreationFinished() {
-    lassosCreationTime.stop();
-  }
-
-  public void nonTerminationAnalysisOfLassoStarted() {
-    lassoNonTerminationTime.start();
-  }
-
-  public void nonTerminationAnalysisOfLassoFinished() {
-    lassoNonTerminationTime.stop();
-  }
-
-  public void terminationAnalysisOfLassoStarted() {
-    lassoTerminationTime.start();
-  }
-
-  public void terminationAnalysisOfLassoFinished() {
-    lassoTerminationTime.stop();
-  }
-
-  public void lassosConstructed(Loop pLoop, int numberOfLassos) {
-    lassosPerLoop.computeIfAbsent(pLoop, l -> new AtomicInteger()).addAndGet(numberOfLassos);
-    lassosCurrentIteration.addAndGet(numberOfLassos);
-  }
-
+  @Override
   public void synthesizedTerminationArgument(Loop pLoop, TerminationArgument pTerminationArgument) {
     checkState(analysedLoops.contains(pLoop));
-    terminationArguments.put(pLoop, pTerminationArgument);
-  }
-
-  public void synthesizedNonTerminationArgument(
-      Loop pLoop, NonTerminationArgument pNonTerminationArgument) {
-    nonTerminationArguments.put(pLoop, pNonTerminationArgument);
+    super.synthesizedTerminationArgument(pLoop, pTerminationArgument);
   }
 
   @Override
@@ -472,7 +387,7 @@ public class TerminationStatistics implements Statistics {
             + loopsWithMaxTerminationArguments);
 
     pOut.println();
-    Map<String, Integer> terminationArguementTypes = Maps.newHashMap();
+    Map<String, Integer> terminationArguementTypes = new HashMap<>();
     for (TerminationArgument terminationArgument : terminationArguments.values()) {
       String name = terminationArgument.getRankingFunction().getName();
       terminationArguementTypes.merge(name, 1, Integer::sum);

@@ -35,6 +35,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -98,6 +99,8 @@ import org.sosy_lab.cpachecker.cpa.invariants.InvariantsCPA;
 import org.sosy_lab.cpachecker.cpa.predicate.PredicateAbstractState;
 import org.sosy_lab.cpachecker.cpa.predicate.PredicateCPA;
 import org.sosy_lab.cpachecker.cpa.targetreachability.ReachabilityState;
+import org.sosy_lab.cpachecker.cpa.testtargets.TestTargetCPA;
+import org.sosy_lab.cpachecker.cpa.testtargets.TestTargetTransferRelation;
 import org.sosy_lab.cpachecker.exceptions.CPAException;
 import org.sosy_lab.cpachecker.exceptions.CPATransferException;
 import org.sosy_lab.cpachecker.util.AbstractStates;
@@ -105,6 +108,7 @@ import org.sosy_lab.cpachecker.util.CPAs;
 import org.sosy_lab.cpachecker.util.LoopStructure.Loop;
 import org.sosy_lab.cpachecker.util.automaton.CachingTargetLocationProvider;
 import org.sosy_lab.cpachecker.util.automaton.TargetLocationProvider;
+import org.sosy_lab.cpachecker.util.automaton.TestTargetLocationProvider;
 import org.sosy_lab.cpachecker.util.predicates.pathformula.PathFormula;
 import org.sosy_lab.cpachecker.util.predicates.pathformula.PathFormulaManager;
 import org.sosy_lab.cpachecker.util.predicates.smt.BooleanFormulaManagerView;
@@ -226,7 +230,14 @@ abstract class AbstractBMCAlgorithm
     specification = checkNotNull(pSpecification);
 
     shutdownNotifier = pShutdownManager.getNotifier();
-    targetLocationProvider = new CachingTargetLocationProvider(shutdownNotifier, logger, cfa);
+    TestTargetCPA testCPA = CPAs.retrieveCPA(pCPA, TestTargetCPA.class);
+    if (testCPA != null) {
+      targetLocationProvider =
+          new TestTargetLocationProvider(
+              ((TestTargetTransferRelation) testCPA.getTransferRelation()).getTestTargets());
+    } else {
+      targetLocationProvider = new CachingTargetLocationProvider(shutdownNotifier, logger, cfa);
+    }
 
     if (induction) {
       induction = checkIfInductionIsPossible(pCFA, pLogger);
@@ -960,7 +971,7 @@ abstract class AbstractBMCAlgorithm
         }
       }
     } else {
-      reachedK = Collections.emptyMap();
+      reachedK = ImmutableMap.of();
     }
     int finalMaxK = maxK;
     return (candidate) -> {
@@ -1028,7 +1039,7 @@ abstract class AbstractBMCAlgorithm
     }
 
     public Obligation(CandidateInvariant pCause, SymbolicCandiateInvariant pBlockingClause) {
-      this(pCause, pBlockingClause, Collections.emptyList());
+      this(pCause, pBlockingClause, ImmutableList.of());
     }
 
     public int getDepth() {

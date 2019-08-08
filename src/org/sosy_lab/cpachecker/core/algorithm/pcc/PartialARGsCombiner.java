@@ -29,9 +29,9 @@ import static org.sosy_lab.cpachecker.util.AbstractStates.IS_TARGET_STATE;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -209,7 +209,8 @@ public class PartialARGsCombiner implements Algorithm, StatisticsProvider {
     List<List<ARGState>> successorsForEdge = new ArrayList<>(initialStates.size());
     EdgeSuccessor edgeSuccessorIdentifier = new EdgeSuccessor();
 
-    Map<Pair<List<AbstractState>, List<ARGState>>, ARGState> constructedCombinedStates = Maps.newHashMap();
+    Map<Pair<List<AbstractState>, List<ARGState>>, ARGState> constructedCombinedStates =
+        new HashMap<>();
     Deque<Pair<List<ARGState>, ARGState>> toVisit = new ArrayDeque<>();
     toVisit.add(Pair.of(roots, combinedRoot));
 
@@ -414,7 +415,7 @@ public class PartialARGsCombiner implements Algorithm, StatisticsProvider {
 
     // no successor in every of the ARGs
     if (count == 0) {
-      return Collections.emptySet();
+      return ImmutableSet.of();
     }
 
     Collection<Pair<List<AbstractState>, List<ARGState>>> result = new ArrayList<>(count);

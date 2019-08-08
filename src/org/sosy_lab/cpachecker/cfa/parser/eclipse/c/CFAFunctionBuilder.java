@@ -28,8 +28,8 @@ import static org.sosy_lab.cpachecker.cfa.CFACreationUtils.isReachableNode;
 
 import com.google.common.base.Verify;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -1109,7 +1109,7 @@ class CFAFunctionBuilder extends ASTVisitor {
         true,
         true,
         false,
-        Sets.newHashSet());
+        new HashSet<>());
   }
 
   /** @category conditions */
@@ -1791,7 +1791,7 @@ class CFAFunctionBuilder extends ASTVisitor {
       case NORMAL:
         assert ASTOperatorConverter.isBooleanExpression(exp);
         addConditionEdges(
-            exp, rootNode, caseNode, notCaseNode, fileLocation, false, Collections.emptySet());
+            exp, rootNode, caseNode, notCaseNode, fileLocation, false, ImmutableSet.of());
         nextCaseStartsAtNode = notCaseNode;
         break;
 
@@ -1863,7 +1863,7 @@ class CFAFunctionBuilder extends ASTVisitor {
           notCaseNode,
           fileLocation,
           false,
-          Collections.emptySet());
+          ImmutableSet.of());
       nextCaseStartsAtNode = notCaseNode;
     }
 

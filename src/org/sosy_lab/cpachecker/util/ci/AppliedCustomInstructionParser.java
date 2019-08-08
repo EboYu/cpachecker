@@ -174,6 +174,10 @@ public class AppliedCustomInstructionParser {
 
     while ((line = br.readLine()) != null) {
       shutdownNotifier.shutdownIfNecessary();
+      line = line.trim();
+      if (line.isEmpty()) {
+        continue;
+      }
       startNode = getCFANode(line, cfaInfo);
       if (startNode == null) {
         continue;
@@ -403,7 +407,7 @@ public class AppliedCustomInstructionParser {
           .transformAndConcat(CFAUtils::getVariableNamesOfExpression)
           .toSet();
     }
-    return Collections.emptySet();
+    return ImmutableSet.of();
   }
 
  private Set<String> getFunctionParameterInput(final CFunctionCallExpression funCall) {

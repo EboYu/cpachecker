@@ -34,7 +34,6 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.ibm.icu.math.BigDecimal;
 import java.math.BigInteger;
@@ -446,7 +445,7 @@ public class InvariantsState implements AbstractState,
           variableTypes,
           abstractionState,
           newEnvironment,
-          Collections.emptySet(),
+          ImmutableSet.of(),
           overflowDetected,
           includeTypeInformation,
           overapproximatesUnsupportedFeature);
@@ -542,7 +541,7 @@ public class InvariantsState implements AbstractState,
             variableTypes,
             abstractionState,
             resultEnvironment,
-            Collections.emptySet(),
+            ImmutableSet.of(),
             overflowDetected,
             includeTypeInformation,
             overapproximatesUnsupportedFeature);
@@ -672,7 +671,7 @@ public class InvariantsState implements AbstractState,
         variableTypes,
         abstractionState,
         NonRecursiveEnvironment.of(tools.compoundIntervalManagerFactory),
-        Collections.emptySet(),
+        ImmutableSet.of(),
         overflowDetected,
         includeTypeInformation,
         overapproximatesUnsupportedFeature);
@@ -1099,7 +1098,7 @@ public class InvariantsState implements AbstractState,
       }
     }
 
-    final Set<MemoryLocation> safePointers = Sets.newHashSet();
+    final Set<MemoryLocation> safePointers = new HashSet<>();
     isInvalidVar =
         Predicates.or(
             isInvalidVar,
@@ -1242,8 +1241,8 @@ public class InvariantsState implements AbstractState,
       }
       if (!evaluated.isSingleton()) {
         // Try and find a variable referring to this variable
-        Set<Variable<CompoundInterval>> visited = Sets.newHashSet();
-        Queue<Variable<CompoundInterval>> waitlist = Queues.newArrayDeque();
+        Set<Variable<CompoundInterval>> visited = new HashSet<>();
+        Queue<Variable<CompoundInterval>> waitlist = new ArrayDeque<>();
         visited.add((Variable<CompoundInterval>) pFormula);
         waitlist.addAll(visited);
         while (!waitlist.isEmpty()) {
@@ -1511,7 +1510,7 @@ public class InvariantsState implements AbstractState,
             variableTypes,
             abstractionState,
             resEnv,
-            Collections.emptySet(),
+            ImmutableSet.of(),
             overflowDetected,
             includeTypeInformation,
             overapproximatesUnsupportedFeature);
@@ -1539,7 +1538,7 @@ public class InvariantsState implements AbstractState,
     }
 
     Set<BooleanFormula<CompoundInterval>> additionalAssumptions =
-        additionalHints.isEmpty() ? Collections.emptySet() : new HashSet<>();
+        additionalHints.isEmpty() ? ImmutableSet.of() : new HashSet<>();
 
     for (BooleanFormula<CompoundInterval> hint :
         FluentIterable.from(Sets.union(pWideningHints, additionalHints))
@@ -1655,7 +1654,7 @@ public class InvariantsState implements AbstractState,
 
       Set<BooleanFormula<CompoundInterval>> commonAssumptions;
       if (assumptions.isEmpty() && pState2.assumptions.isEmpty()) {
-        commonAssumptions = Collections.emptySet();
+        commonAssumptions = ImmutableSet.of();
       } else {
         commonAssumptions = new HashSet<>(Sets.intersection(assumptions, pState2.assumptions));
         for (BooleanFormula<CompoundInterval> assumption :

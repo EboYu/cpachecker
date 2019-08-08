@@ -1058,9 +1058,8 @@ public class ValueAnalysisTransferRelation
     long offset = 0L;
     for (CCompositeType.CCompositeTypeMemberDeclaration memberType : pLType.getMembers()) {
       MemoryLocation assignedField = createFieldMemoryLocation(pAssignedVar, offset);
-      CExpression owner = null;
 
-      owner = pExp;
+      CExpression owner = pExp;
 
       CExpression fieldReference =
           new CFieldReference(pExp.getFileLocation(), memberType.getType(), memberType.getName(), owner, false);
@@ -1246,8 +1245,11 @@ public class ValueAnalysisTransferRelation
 
   @Override
   public Collection<? extends AbstractState> strengthen(
-      AbstractState pElement, List<AbstractState> pElements, CFAEdge pCfaEdge, Precision pPrecision)
-    throws CPATransferException {
+      AbstractState pElement,
+      Iterable<AbstractState> pElements,
+      CFAEdge pCfaEdge,
+      Precision pPrecision)
+      throws CPATransferException {
     assert pElement instanceof ValueAnalysisState;
 
     ArrayList<ValueAnalysisState> toStrengthen = new ArrayList<>();
@@ -1542,7 +1544,7 @@ public class ValueAnalysisTransferRelation
     }
 
     if (newState == null) {
-      return Collections.emptyList();
+      return ImmutableList.of();
     } else {
       return Collections.singleton(newState);
     }

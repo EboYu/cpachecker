@@ -88,7 +88,9 @@ public class BAMSubgraphComputer {
    * the new CEX-graph contains the states of the most-outer block/reached-set.
    *
    * @param target a state from the reachedSet, is used as the last state of the returned subgraph.
-   * @param pMainReachedSet most outer reached set, contains the target-state.
+   * @param pMainReachedSet most outer reached set corresponding to the current refinement. The
+   *     given reached-set can be nested inside another reached-set, which must not be used in the
+   *     current refinement. The given reached-set contains the target-state.
    * @return root and target of a subgraph, that contains all states on all paths to newTreeTarget.
    *     The subgraph contains only copies of the real ARG states, because one real state can be
    *     used multiple times in one path.
@@ -173,7 +175,10 @@ public class BAMSubgraphComputer {
           assert !useCopyOnWriteRefinement
               : "CopyOnWrite-refinement should never cause missing blocks: " + e;
           if (cleanupOnMissingBlock) {
-            ARGInPlaceSubtreeRemover.removeSubtree(reachedSet, currentState);
+            if (!currentState.isDestroyed()) {
+              // TODO Why is the state (and subtree) already removed before?
+              ARGInPlaceSubtreeRemover.removeSubtree(reachedSet, currentState);
+            }
           }
           throw e;
         }

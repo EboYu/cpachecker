@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.sosy_lab.cpachecker.cfa.types.MachineModel;
@@ -191,10 +190,10 @@ public class SMGJoinFieldsTest {
 
     for (SMGEdgeHasValue hv : Sets.union(hvSet1, hvSet2)) { // just two edges in there
       assertThat(hv.getValue()).isEqualTo(SMGZeroValue.INSTANCE);
-      assertThat(hv.getObject()).isSameAs(obj1);
+      assertThat(hv.getObject()).isSameInstanceAs(obj1);
       assertThat(hv.getSizeInBits(MachineModel.LINUX64)).isEqualTo(32);
       assertThat(hv.getOffset()).isEqualTo(16);
-      Assert.assertTrue(hv.isCompatibleField(nonPointer));
+      assertThat(hv.isCompatibleField(nonPointer)).isTrue();
     }
   }
 
@@ -220,7 +219,7 @@ public class SMGJoinFieldsTest {
     assertThat(hvSet).hasSize(2);
     for (SMGEdgeHasValue hv : hvSet) {
       assertThat(hv.getValue()).isEqualTo(SMGZeroValue.INSTANCE);
-      assertThat(hv.getObject()).isSameAs(obj1);
+      assertThat(hv.getObject()).isSameInstanceAs(obj1);
       assertThat(hv.getOffset()).isAnyOf(112L, 144L);
       if (hv.getOffset() == 112) {
         assertThat(hv.getSizeInBits(MachineModel.LINUX64)).isEqualTo(16);
@@ -315,8 +314,8 @@ public class SMGJoinFieldsTest {
       assertThat(values).doesNotContain(edge.getValue());
       values.add(edge.getValue());
     }
-    Assert.assertTrue(seenZero);
-    Assert.assertTrue(seenTwo);
+    assertThat(seenZero).isTrue();
+    assertThat(seenTwo).isTrue();
 
     smg2.addValue(value1);
     smg2.addHasValueEdge(smg1_4bFrom0ToV1);
@@ -396,12 +395,12 @@ public class SMGJoinFieldsTest {
   private void checkStatusAfterRelax(SMGJoinStatus expected, SMG a, SMG b, SMGRegion object) {
     SMGJoinFields js = new SMGJoinFields(a, a, object, object); // dummy instantiation
     js.joinFieldsRelaxStatus(a, b, SMGJoinStatus.INCOMPARABLE, object);
-    Assert.assertEquals(expected, js.getStatus());
+    assertThat(js.getStatus()).isEqualTo(expected);
   }
 
   private void checkStatusAfterJoinFields(SMGJoinStatus expected, SMG a, SMG b, SMGRegion object) {
     SMGJoinFields js = new SMGJoinFields(a, b, object, object); // join fields
-    Assert.assertEquals(expected, js.getStatus());
+    assertThat(js.getStatus()).isEqualTo(expected);
   }
 
   @SuppressWarnings("unused")
