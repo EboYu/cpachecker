@@ -668,7 +668,7 @@ public class InterleavedAlgorithm implements Algorithm, StatisticsProvider {
       throws InvalidConfigurationException, CPAException, InterruptedException {
 
     pCurrentContext.localShutdownManager = ShutdownManager.createWithParent(shutdownNotifier);
-    ArrayList<ResourceLimit> limits = new ArrayList<>();
+    List<ResourceLimit> limits = new ArrayList<>();
     try {
       limits.add(ProcessCpuTimeLimit.fromNowOn(TimeSpan.ofSeconds(pCurrentContext.timeLimit)));
     } catch (JMException e) {
@@ -789,7 +789,7 @@ public class InterleavedAlgorithm implements Algorithm, StatisticsProvider {
 
     Precision initialPrecision =
         pCpa.getInitialPrecision(pMainFunction, StateSpacePartition.getDefaultPartition());
-    if (previousReachedSets != null && previousReachedSets.size() > 0) {
+    if (previousReachedSets != null && !previousReachedSets.isEmpty()) {
       initialPrecision =
           aggregatePrecisionsForReuse(previousReachedSets, initialPrecision, pFMgr, pConfig);
     }
@@ -804,7 +804,7 @@ public class InterleavedAlgorithm implements Algorithm, StatisticsProvider {
       final Precision pInitialPrecision,
       final @Nullable FormulaManagerView pFMgr,
       final Configuration pConfig) {
-    Preconditions.checkArgument(pPreviousReachedSets.size() > 0);
+    Preconditions.checkArgument(!pPreviousReachedSets.isEmpty());
     Precision resultPrec = pInitialPrecision;
 
     PredicatePrecision predPrec;
